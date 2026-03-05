@@ -17,8 +17,8 @@
   --r:10px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
-body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);height:100vh;overflow:hidden;}
-.screen{display:none;flex-direction:column;height:100vh;}
+body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);height:100vh;height:100dvh;overflow:hidden;}
+.screen{display:none;flex-direction:column;height:100vh;height:100dvh;}
 .screen.active{display:flex;}
 
 /* LOGIN */
@@ -147,7 +147,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);
 .add-btn:active{background:rgba(201,149,12,.08);}
 
 /* CHAT */
-.cw{display:flex;flex-direction:column;height:calc(100vh - 56px - 56px);overflow:hidden;}
+.cw{display:flex;flex-direction:column;height:calc(100vh - 56px - 56px);height:calc(100dvh - 56px - 56px);overflow:hidden;}
 .ch{padding:.8rem 1rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;}
 .chn{font-weight:600;font-size:.9rem;}
 .cho{font-size:.67rem;color:#4ade80;display:flex;align-items:center;gap:3px;}
@@ -298,6 +298,67 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);
 .cb2{flex:1;padding:.75rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border:none;}
 .cb2.yes{background:var(--rouge);color:var(--blanc);}
 .cb2.no{background:var(--gris2);color:var(--blanc);}
+
+/* ══ RESPONSIVE — TABLET & DESKTOP ══ */
+@media(min-width:600px){
+  /* Center the app in a max-width container on larger screens */
+  #app{max-width:480px;margin:0 auto;position:relative;border-left:1px solid var(--gris2);border-right:1px solid var(--gris2);}
+  #login{max-width:480px;margin:0 auto;}
+  .nav{max-width:480px;left:50%;transform:translateX(-50%);}
+  .mov .ms{max-width:480px;margin:0 auto;}
+  .toast{max-width:380px;}
+  #cv{max-width:480px;margin:0 auto;left:50%;transform:translateX(-50%);}
+  .ct{padding:1.2rem 1.5rem 5.5rem;}
+}
+
+@media(min-width:900px){
+  /* Wider container on desktop */
+  #app{max-width:560px;}
+  #login .lw{max-width:380px;}
+  .nav{max-width:560px;}
+  .mov .ms{max-width:520px;border-radius:14px;margin:auto;max-height:85vh;}
+  .mov{align-items:center;}
+  #cv{max-width:560px;}
+  /* Larger fonts on desktop for readability */
+  .h1{font-size:2.1rem;}
+  .kv{font-size:1.8rem;}
+  .vn{font-size:1rem;}
+  .bb{font-size:.9rem;}
+  .fi{font-size:1rem;padding:.85rem 1rem;}
+  .pk{font-size:1.7rem;padding:1rem;}
+  /* Hover states for desktop */
+  .vc:hover{border-color:var(--or);transform:scale(1.01);transition:all .2s;}
+  .hi:hover{border-color:rgba(201,149,12,.4);background:rgba(201,149,12,.05);}
+  .qb:hover{border-color:var(--or);background:rgba(201,149,12,.1);}
+  .ni:hover{color:var(--or3);}
+  .pk:hover{background:var(--noir3);border-color:var(--or);color:var(--or3);}
+  .sg:hover{background:rgba(201,149,12,.12);border-color:var(--or);color:var(--or3);}
+  .add-btn:hover{background:rgba(201,149,12,.08);border-color:var(--or);}
+  .cb:hover{opacity:.85;}
+  .mi:hover{background:var(--noir2);border-radius:var(--r);}
+  .save-btn:hover{opacity:.9;}
+  .cancel-btn:hover{border-color:var(--gris3);}
+  .sbtn:hover{transform:scale(1.05);}
+}
+
+/* ══ RESPONSIVE — VERY SMALL SCREENS ══ */
+@media(max-width:350px){
+  .pg{max-width:200px;gap:.4rem;}
+  .pk{font-size:1.2rem;padding:.65rem;}
+  .ll{font-size:3rem;}
+  .kr{grid-template-columns:1fr;}
+  .ak3{grid-template-columns:1fr 1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .charge-name{width:90px;font-size:.72rem;}
+  .cbar{padding:.5rem .6rem;}
+}
+
+/* Safe area for notched phones */
+@supports(padding-bottom: env(safe-area-inset-bottom)){
+  .nav{padding-bottom:env(safe-area-inset-bottom);}
+  .ct{padding-bottom:calc(5.5rem + env(safe-area-inset-bottom));}
+  .cbar{padding-bottom:calc(.65rem + env(safe-area-inset-bottom));}
+}
 </style>
 <script>
 // Fonctions PIN - déclarées tôt pour être disponibles immédiatement
@@ -329,7 +390,6 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
       </div>
     </div>
 
-  </div>
     <div style="text-align:center;margin-top:1rem;">
       <span onclick="openResetPin()" style="font-size:.7rem;color:var(--gris);cursor:pointer;text-decoration:underline;">PIN oublié ?</span>
     </div>
@@ -445,10 +505,12 @@ function buildClient(){
   const totalNet=u.villas.reduce((s,v)=>s+(v.net||0),0);
   const totalCom=u.villas.reduce((s,v)=>s+(v.com||0),0);
   const comPct=totalRev>0?Math.round(totalCom/totalRev*100):0;
+  const _moisNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const _curPeriod=_moisNoms[new Date().getMonth()]+' '+new Date().getFullYear();
   let h=`<div class="h1">Bonjour, ${u.name.split(' ')[0]} 👋</div>
-  <div class="sub">Février 2026 · ${u.villas.length} villa${u.villas.length>1?'s':''}</div>
+  <div class="sub">${_curPeriod} · ${u.villas.length} villa${u.villas.length>1?'s':''}</div>
   <div class="kr">
-    <div class="kc"><div class="kl">Revenus Fév.</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
+    <div class="kc"><div class="kl">Revenus ${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]}</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
     <div class="kc"><div class="kl">Bénéfice net</div><div class="kv">${fmt(totalNet)}</div><div class="kd ${totalNet>0?'up':''}">${u.villas.length} villa${u.villas.length>1?'s':''}</div></div>
   </div>
   <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);">
@@ -468,8 +530,8 @@ function buildClient(){
   <div class="sh">Mes villas</div>`;
   h += `<button class="add-btn" onclick="openAddVilla()" style="margin-bottom:.8rem;">＋ Ajouter une villa</button>`;
   u.villas.forEach(v=>{
-    const rp=Math.min(100,Math.round((v.dep+v.chg)/v.rev*100));
-    const rn=Math.max(0,Math.round(v.net/v.rev*100));
+    const rp=v.rev>0?Math.min(100,Math.round((v.dep+v.chg)/v.rev*100)):0;
+    const rn=v.rev>0?Math.max(0,Math.round(v.net/v.rev*100)):0;
     h+=`<div class="vc ${v.pos?'pos':'neg'}" onclick="openVilla('${v.id}')">
       <div class="vt"><div><div class="vn">${v.name}</div><div class="vp">${v.period}</div></div>
       <div class="vnet ${v.pos?'pos':'neg'}">${v.pos?'+':''}${fmt(v.net)}</div></div>
@@ -510,7 +572,7 @@ function buildAdmin(){
   </div>
   <div class="kr">
     <div class="kc"><div class="kl">Total revenus</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">${clients.length} clients</div></div>
-    <div class="kc"><div class="kl">Net global</div><div class="kv">${fmt(totalNet)}</div><div class="kd up">Fév. 2026</div></div>
+    <div class="kc"><div class="kl">Net global</div><div class="kv">${fmt(totalNet)}</div><div class="kd up">${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]} ${new Date().getFullYear()}</div></div>
   </div>
   <div class="sh">Clients actifs</div>`;
   clients.forEach(function(c){
@@ -867,7 +929,7 @@ function saveNewClient(){
   const pinDisplay = document.getElementById('fc-pin'); if(pinDisplay) pinDisplay.value='';
   closeMov();
   buildAdmin();
-  showToast('✅ Client '+name+' créé ! Identifiant : '+id+' · PIN : '+pinVal);
+  showToast('✅ Client '+name+' créé ! Identifiant : '+id);
 }
 
 // ══ DELETE CLIENT ══
@@ -1018,7 +1080,7 @@ function buildProfile(){
     <div class="mi" onclick="goPage('dash')" style="cursor:pointer"><div class="mii">🏠</div><div class="mit"><div class="miT">Mes villas</div><div class="miD">Voir toutes mes villas</div></div><div style="color:var(--or3)">›</div></div>
     <div class="mi" onclick="goPage('hist')" style="cursor:pointer"><div class="mii">📄</div><div class="mit"><div class="miT">Mes rapports</div><div class="miD">Télécharger vos rapports PDF</div></div><div style="color:var(--or3)">›</div></div>
     <div class="mi"><div class="mii">💳</div><div class="mit"><div class="miT">Abonnement</div><div class="miD">${isAdmin?'Gérer les clients':'Formule ACS'}</div></div><div style="color:var(--gris)">›</div></div>
-    \${getAiSection(isAdmin)}
+    `+getAiSection(isAdmin)+`
     <div class="sh" style="margin-top:.8rem">Notifications</div>
     <div class="mi" onclick="testNotif()"><div class="mii">🔔</div><div class="mit"><div class="miT">Rappel quotidien 19h</div><div class="miD">Appuyez pour activer / tester</div></div><div style="color:var(--or3);font-size:.8rem;">Activer</div></div>
     <div class="sh" style="margin-top:.8rem">Support</div>
@@ -1077,7 +1139,8 @@ function initChat(){
   addBot('💡 <em>Format :<br>Nom villa, mois : Airbnb X séjours X ฿, électricité X ฿, eau X ฿, ménage X ฿, commission X%</em>');
 }
 function addBot(html){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg bot';d.innerHTML='<div class="bb">'+html+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
-function addUser(t){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML='<div class="bb">'+t.replace(/\n/g,'<br>')+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function addUser(t){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML='<div class="bb">'+escHtml(t).replace(/\n/g,'<br>')+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
 function norm(s){
   // Normalise: accents, majuscules, espaces multiples
   return s.toLowerCase()
@@ -1131,9 +1194,9 @@ function parseData(txt){
   var rev=0;
   // Pattern: plateforme [X séjours/nuits] MONTANT
   // On cherche le plus grand nombre après la plateforme (le montant, pas le nb de séjours)
-  var revRx=/(?:airbnb|air\s*bnb|booking|agoda|direct|location|loyer|revenu|rent|recette)((?:[^\d]|\d{1,2}(?:\s*s[eé]jours?|\s*nuits?))*)(\d[\d\s.,]*)/gi;
+  var revRx=/(?:airbnb|air\s*bnb|booking|agoda|direct|location|loyer|revenu|rent|recette)(?:[^\d]|\d{1,2}(?:\s*s[eé]jours?|\s*nuits?))*(\d[\d\s.,]*)/gi;
   var rm; while((rm=revRx.exec(t))!==null){
-    var val=parseInt(rm[3].replace(/[\s.,]/g,''));
+    var val=parseInt(rm[1].replace(/[\s.,]/g,''));
     if(val>=1000) rev+=val; // seulement les vrais montants (>=1000 ฿)
   }
   // Fallback: chercher tous les nombres >= 1000 qui ne sont pas des dépenses
@@ -1203,7 +1266,7 @@ function sendM(){
   addUser(t); inp.value=''; inp.style.height='auto';
   var ty=document.createElement('div');
   ty.className='msg bot';
-  ty.innerHTML='<div class="bb"><span class="tdots"><span>.</span><span>.</span><span>.</span></span></div>';
+  ty.innerHTML='<div class="bb"><div class="typ"><span></span><span></span><span></span></div></div>';
   document.getElementById('chatmsgs').appendChild(ty);
   document.getElementById('chatmsgs').scrollTop=99999;
 
@@ -1326,19 +1389,31 @@ function submitDeclaration(){
   const mois = document.getElementById('decl-mois').value;
   const annee = document.getElementById('decl-annee').value;
   const periode = mois+' '+annee;
+
+  // Read all values BEFORE closing the modal (elements get destroyed on close)
+  const villaData = [];
+  CU.villas.forEach(function(v, vi){
+    villaData.push({
+      v: v,
+      air: parseFloat((document.getElementById('d'+vi+'_air')||{}).value)||0,
+      bk:  parseFloat((document.getElementById('d'+vi+'_bk') ||{}).value)||0,
+      el:  parseFloat((document.getElementById('d'+vi+'_el') ||{}).value)||0,
+      eau: parseFloat((document.getElementById('d'+vi+'_eau')||{}).value)||0,
+      men: parseFloat((document.getElementById('d'+vi+'_men')||{}).value)||0,
+      div: parseFloat((document.getElementById('d'+vi+'_div')||{}).value)||0,
+      cp:  parseFloat((document.getElementById('d'+vi+'_com')||{}).value)||(v.comPct||20)
+    });
+  });
+
   closeMov();
   goPage('chat');
 
   const allReports = [];
 
-  CU.villas.forEach(function(v, vi){
-    const air = parseFloat(document.getElementById('d'+vi+'_air')?document.getElementById('d'+vi+'_air').value:0)||0;
-    const bk  = parseFloat(document.getElementById('d'+vi+'_bk') ?document.getElementById('d'+vi+'_bk').value:0)||0;
-    const el  = parseFloat(document.getElementById('d'+vi+'_el') ?document.getElementById('d'+vi+'_el').value:0)||0;
-    const eau = parseFloat(document.getElementById('d'+vi+'_eau')?document.getElementById('d'+vi+'_eau').value:0)||0;
-    const men = parseFloat(document.getElementById('d'+vi+'_men')?document.getElementById('d'+vi+'_men').value:0)||0;
-    const div = parseFloat(document.getElementById('d'+vi+'_div')?document.getElementById('d'+vi+'_div').value:0)||0;
-    const cp  = parseFloat(document.getElementById('d'+vi+'_com')?document.getElementById('d'+vi+'_com').value:v.comPct||20)||20;
+  villaData.forEach(function(d){
+    const v=d.v;
+    const air=d.air, bk=d.bk, el=d.el, eau=d.eau, men=d.men;
+    const div=d.div, cp=d.cp;
     const rev = air + bk;
     if(rev===0) return;
 
@@ -2289,7 +2364,7 @@ function applyNewPin(id, newPin) {
     // Effacer la session pour forcer reconnexion
     try{ sessionStorage.removeItem('acs_session'); }catch(e){}
     closeMov();
-    showToast('✅ PIN changé : ' + newPin + ' — Connectez-vous avec ce nouveau PIN');
+    showToast('✅ PIN changé — Connectez-vous avec votre nouveau PIN');
     pin=''; updDots();
   } else {
     closeMov();
@@ -2303,13 +2378,22 @@ function resetPinWithEmail(id, newPin) {
   try { localStorage.setItem('acs_email_'+id, email); } catch(e) {}
   if(CLIENTS[id]) { CLIENTS[id].email = email; CLIENTS[id].pin = newPin; save('clients', CLIENTS); }
   closeMov();
-  showToast('✅ Nouveau PIN : ' + newPin + ' — Reconnectez-vous');
+  showToast('✅ PIN réinitialisé — Reconnectez-vous');
   pin=''; updDots();
 }
 
 function clearSavedId(){
   try{localStorage.removeItem('acs_last_id');}catch(e){}
   document.getElementById('lid').value='';
+  // Restore the login field and remove the saved user hint
+  var lidEl=document.getElementById('lid');
+  var labelEl=lidEl?lidEl.previousElementSibling:null;
+  if(lidEl)lidEl.style.display='';
+  if(labelEl&&labelEl.classList.contains('fl'))labelEl.style.display='';
+  // Remove the "Pas vous?" hint
+  var hints=document.querySelectorAll('#login .lw div');
+  hints.forEach(function(h){if(h.textContent.indexOf('Pas vous')!==-1)h.remove();});
+  location.reload();
 }
 
 // Init page display
