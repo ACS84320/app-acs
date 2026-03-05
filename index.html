@@ -146,23 +146,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);
 .add-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.85rem;background:transparent;border:1px dashed rgba(201,149,12,.4);border-radius:var(--r);color:var(--or3);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;margin-top:.3rem;}
 .add-btn:active{background:rgba(201,149,12,.08);}
 
-/* CHAT */
-.cw{display:flex;flex-direction:column;height:calc(100vh - 56px - 56px);height:calc(100dvh - 56px - 56px);overflow:hidden;}
-.ch{padding:.8rem 1rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;}
-.chn{font-weight:600;font-size:.9rem;}
-.cho{font-size:.67rem;color:#4ade80;display:flex;align-items:center;gap:3px;}
-.cho::before{content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;display:inline-block;}
-.cm{flex:1;overflow-y:auto;padding:.85rem .9rem;display:flex;flex-direction:column;gap:.65rem;}
-.cm::-webkit-scrollbar{width:0;}
-.msg{max-width:83%;display:flex;flex-direction:column;gap:2px;}
-.msg.bot{align-self:flex-start;}
-.msg.usr{align-self:flex-end;}
-.bb{padding:.65rem .85rem;border-radius:11px;font-size:.83rem;line-height:1.5;}
-.bot .bb{background:var(--noir2);border:1px solid var(--gris2);border-radius:4px 11px 11px 11px;}
-.usr .bb{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);font-weight:500;border-radius:11px 11px 4px 11px;}
-.mt{font-size:.56rem;color:var(--gris);}
-.bot .mt{text-align:left;}
-.usr .mt{text-align:right;}
+/* RAPPORT CARD (utilisée dans les modales résultats) */
 .rc{background:var(--noir3);border:1px solid var(--or);border-radius:8px;padding:.7rem;margin-top:.35rem;}
 .rct{font-size:.72rem;font-weight:600;color:var(--or3);margin-bottom:.35rem;}
 .rr{display:flex;justify-content:space-between;font-size:.73rem;padding:2px 0;border-bottom:1px solid var(--gris2);}
@@ -172,21 +156,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);
 .rbtn{flex:1;padding:.4rem;border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;border:none;}
 .rbtn.g{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);}
 .rbtn.s{background:var(--gris2);color:var(--blanc);}
-.sugs{display:flex;gap:.4rem;padding:.45rem .8rem;overflow-x:auto;background:var(--noir2);border-top:1px solid var(--gris2);flex-shrink:0;scrollbar-width:none;}
-.sugs::-webkit-scrollbar{width:0;}
-.sg{flex-shrink:0;padding:.3rem .7rem;background:var(--noir3);border:1px solid var(--gris2);border-radius:16px;font-size:.68rem;color:var(--gris);cursor:pointer;white-space:nowrap;}
-.sg:active{background:rgba(201,149,12,.12);border-color:var(--or);color:var(--or3);}
-.cbar{padding:.65rem .85rem;background:var(--noir2);border-top:1px solid var(--gris2);display:flex;gap:.45rem;align-items:flex-end;flex-shrink:0;}
-.cin{flex:1;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);font-family:'DM Sans',sans-serif;font-size:.83rem;padding:.58rem .8rem;border-radius:17px;outline:none;resize:none;max-height:85px;transition:border-color .2s;line-height:1.4;}
-.cin:focus{border-color:var(--or);}
-.sbtn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--or),var(--or3));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sbtn:active{transform:scale(.9);}
-.sbtn svg{width:15px;height:15px;fill:var(--noir);}
-.typ{display:flex;gap:3px;align-items:center;padding:.35rem 0;}
-.typ span{width:5px;height:5px;border-radius:50%;background:var(--gris);animation:b 1.1s infinite;}
-.typ span:nth-child(2){animation-delay:.18s;}
-.typ span:nth-child(3){animation-delay:.36s;}
-@keyframes b{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
 
 /* HISTORIQUE */
 .mg{margin-bottom:1.3rem;}
@@ -213,14 +182,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);
 .tt{font-size:.63rem;color:var(--gris);margin-bottom:3px;}
 .tbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;background:var(--or);color:var(--noir);font-size:.6rem;font-weight:700;padding:0 3px;}
 
-/* CONV */
-#cv{display:none;flex-direction:column;position:fixed;inset:0;background:var(--noir);z-index:200;}
-#cv.open{display:flex;}
-.cvb{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;}
-.bk{background:none;border:none;color:var(--or3);font-size:1.4rem;cursor:pointer;line-height:1;}
-.cvi{flex:1;}
-.cvn{font-weight:600;font-size:.88rem;}
-.cvs{font-size:.68rem;color:#4ade80;}
 
 /* PROFIL */
 .ph{text-align:center;padding:1.7rem 1rem 1.2rem;background:var(--noir2);border-bottom:1px solid var(--gris2);margin:-1rem -1rem 1.2rem;}
@@ -406,21 +367,17 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
     </div>
   </div>
   <div id="pg-dash" class="ct"></div>
-  <div id="pg-chat" class="ct" style="padding:0;"><div class="cw"><div class="ch"><div class="chn">Assistant ACS</div><div class="cho">En ligne — répond instantanément</div></div><div class="cm" id="chatmsgs"></div><div class="sugs"><div class="sg" onclick="fillC('Toutes mes villas ce mois')">📊 Toutes villas</div><div class="sg" onclick="fillC('Bilan annuel 2025')">📅 Bilan annuel</div></div><div class="cbar"><textarea class="cin" id="cin" placeholder="Ex: Villa X, mars : Airbnb 2 séjours 50 000 ฿, électricité 3 000 ฿, eau 1 500 ฿, ménage 2 000 ฿, commission 20%" rows="1" oninput="aR(this)"></textarea><button class="sbtn" onclick="sendM()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div></div></div>
   <div id="pg-hist" class="ct"></div>
   <div id="pg-msg" class="ct" style="padding:0;"><div style="padding:1rem 1rem .5rem;"><div class="h1">Messages</div><div class="sub">Communication avec votre conciergerie</div></div><div id="threads"></div></div>
   <div id="pg-profil" class="ct"></div>
   <nav class="nav">
     <button class="ni on" onclick="goPage('dash')" id="nv-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
-    <button class="ni" onclick="goPage('chat')" id="nv-chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Assistant</span></button>
     <button class="ni" onclick="goPage('hist')" id="nv-hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Rapports</span></button>
     <button class="ni" onclick="goPage('msg')" id="nv-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span>Messages</span></button>
     <button class="ni" onclick="goPage('profil')" id="nv-profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
   </nav>
 </div>
 
-<!-- CONV VIEW -->
-<div id="cv"><div class="cvb"><button class="bk" onclick="closeCV()">‹</button><div class="cvi"><div class="cvn" id="cvn"></div><div class="cvs" id="cvs"></div></div></div><div class="cm" id="cvmsgs" style="flex:1;padding:.85rem .9rem;"></div><div class="cbar"><textarea class="cin" id="cvin" placeholder="Message…" rows="1" oninput="aR(this)"></textarea><button class="sbtn" onclick="sendCV()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div></div>
 
 <!-- MODAL -->
 <div class="mov" id="modal" onclick="closeMov(event)"><div class="ms" id="modalbody"></div></div>
@@ -440,7 +397,7 @@ const DEFAULT_CLIENTS = {};
 let CLIENTS = load('clients', DEFAULT_CLIENTS);
 const ADMIN = {pin:'0000',role:'admin',name:'Alexis B.',initials:'AB',plan:'Admin'};
 
-let CU=null, botStep=0; // pin déjà déclaré en haut
+let CU=null;
 
 // ══ PIN ══
 // pk, pdel, updDots déclarés en haut du document
@@ -490,9 +447,8 @@ function initApp(){
   av.className=CU.role==='admin'?'av adm':'av';
   CU.role==='admin'?buildAdmin():buildClient();
   buildProfile();buildThreads();
-  initChat();goPage('dash');
+  goPage('dash');
   if(CU.role!=='admin') initNotifications();
-  setTimeout(updateApiKeyUI, 100);
 }
 
 // ══ CLIENT ══
@@ -526,7 +482,7 @@ function buildClient(){
     </div>
   </div>
   <div class="qb" onclick="openDeclaration()" style="border-color:rgba(201,149,12,.5);background:rgba(201,149,12,.07);"><div class="qi">📋</div><div class="qt"><strong>Déclarer ce mois</strong><small>Formulaire guidé — rapide et simple</small></div><div class="qa">›</div></div>
-  <div class="qb" onclick="goPage('chat')"><div class="qi">💬</div><div class="qt"><strong>Assistant ACS</strong><small>Chat libre avec l'assistant IA</small></div><div class="qa">›</div></div>
+  <div class="qb" onclick="openDivers()" style="border-color:rgba(124,58,237,.35);background:rgba(124,58,237,.05);"><div class="qi" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">⚡</div><div class="qt"><strong>Dépenses diverses</strong><small>Ajouter une dépense imprévue</small></div><div class="qa">›</div></div>
   <div class="sh">Mes villas</div>`;
   h += `<button class="add-btn" onclick="openAddVilla()" style="margin-bottom:.8rem;">＋ Ajouter une villa</button>`;
   u.villas.forEach(v=>{
@@ -699,7 +655,7 @@ function openAddVilla(mode){
         </div>
       </div>
       <div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.15);border-radius:6px;padding:.55rem .7rem;font-size:.7rem;color:var(--gris);margin-bottom:.5rem;line-height:1.5;">
-        ℹ️ Électricité, eau, ménage et autres charges variables seront déclarées chaque mois dans l'assistant.
+        ℹ️ Électricité, eau, ménage et autres charges variables seront saisies lors de chaque déclaration mensuelle.
       </div>
       <div id="extra-charges"></div>
       <button class="add-btn" onclick="addExtraCharge()" style="margin:.6rem 0;">＋ Autre charge</button>
@@ -1057,15 +1013,6 @@ function buildThreads(){
 }
 
 // ══ PROFIL ══
-function getAiSection(isAdmin){
-  if(isAdmin){
-    return '<div class="sh" style="margin-top:.8rem">Assistant IA — Configuration</div>'
-      +'<div class="mi" onclick="openApiKeyModal()" style="cursor:pointer"><div class="mii">🤖</div><div class="mit"><div class="miT">Clé API Anthropic</div><div id="api-key-status" class="miD">Non configurée</div></div><div style="color:var(--or3);font-size:.8rem;" id="api-key-badge">Configurer</div></div>';
-  }
-  return '<div class="sh" style="margin-top:.8rem">Assistant IA</div>'
-    +'<div class="mi"><div class="mii">🤖</div><div class="mit"><div class="miT">Assistant ACS — Claude</div><div class="miD" id="client-ai-status">Chargement...</div></div></div>';
-}
-
 function buildProfile(){
   const u=CU;
   const isAdmin=u.role==='admin';
@@ -1080,7 +1027,6 @@ function buildProfile(){
     <div class="mi" onclick="goPage('dash')" style="cursor:pointer"><div class="mii">🏠</div><div class="mit"><div class="miT">Mes villas</div><div class="miD">Voir toutes mes villas</div></div><div style="color:var(--or3)">›</div></div>
     <div class="mi" onclick="goPage('hist')" style="cursor:pointer"><div class="mii">📄</div><div class="mit"><div class="miT">Mes rapports</div><div class="miD">Télécharger vos rapports PDF</div></div><div style="color:var(--or3)">›</div></div>
     <div class="mi"><div class="mii">💳</div><div class="mit"><div class="miT">Abonnement</div><div class="miD">${isAdmin?'Gérer les clients':'Formule ACS'}</div></div><div style="color:var(--gris)">›</div></div>
-    `+getAiSection(isAdmin)+`
     <div class="sh" style="margin-top:.8rem">Notifications</div>
     <div class="mi" onclick="testNotif()"><div class="mii">🔔</div><div class="mit"><div class="miT">Rappel quotidien 19h</div><div class="miD">Appuyez pour activer / tester</div></div><div style="color:var(--or3);font-size:.8rem;">Activer</div></div>
     <div class="sh" style="margin-top:.8rem">Support</div>
@@ -1090,135 +1036,7 @@ function buildProfile(){
     <div style="height:1rem"></div>`;
 }
 
-// ══ CHAT ══
-// ══ CHAT INTELLIGENT ══
-let chatHistory=[];
-
-function saveChatHistory(){
-  if(!CU||CU.role==='admin') return;
-  const msgs=document.getElementById('chatmsgs');
-  const items=[];
-  msgs.querySelectorAll('.msg').forEach(m=>{
-    items.push({cls:m.className, html:m.querySelector('.bb').innerHTML, ts:m.querySelector('.mt').textContent});
-  });
-  const data={ts:Date.now(), items};
-  try{ localStorage.setItem('acs_chat_'+CU.id, JSON.stringify(data)); }catch(e){}
-}
-
-function loadChatHistory(){
-  if(!CU||CU.role==='admin') return false;
-  try{
-    const raw=localStorage.getItem('acs_chat_'+CU.id);
-    if(!raw) return false;
-    const data=JSON.parse(raw);
-    // Expirer après 24h
-    if(Date.now()-data.ts > 24*60*60*1000){
-      localStorage.removeItem('acs_chat_'+CU.id);
-      return false;
-    }
-    const msgs=document.getElementById('chatmsgs');
-    msgs.innerHTML='';
-    data.items.forEach(item=>{
-      const d=document.createElement('div');
-      d.className=item.cls;
-      d.innerHTML='<div class="bb">'+item.html+'</div><div class="mt">'+item.ts+'</div>';
-      msgs.appendChild(d);
-    });
-    msgs.scrollTop=msgs.scrollHeight;
-    return true;
-  }catch(e){ return false; }
-}
-
-function initChat(){
-  const msgs=document.getElementById('chatmsgs');msgs.innerHTML='';
-  chatHistory=[];
-  // Essayer de charger l'historique des dernières 24h
-  if(loadChatHistory()) return;
-  const prenom=CU?CU.name.split(' ')[0]:'';
-  addBot('Bonjour '+prenom+' 👋 Je suis votre assistant ACS.<br>Envoyez-moi les chiffres de vos villas et je génère vos rapports automatiquement.');
-  addBot('💡 <em>Format :<br>Nom villa, mois : Airbnb X séjours X ฿, électricité X ฿, eau X ฿, ménage X ฿, commission X%</em>');
-}
-function addBot(html){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg bot';d.innerHTML='<div class="bb">'+html+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
-function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function addUser(t){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML='<div class="bb">'+escHtml(t).replace(/\n/g,'<br>')+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
-function norm(s){
-  // Normalise: accents, majuscules, espaces multiples
-  return s.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9\s%]/g,' ')
-    .replace(/\s+/g,' ').trim();
-}
-
-function analyzeMsg(txt){
-  var t=norm(txt);
-  var hasNum=/\d/.test(txt);
-  // Revenus — très flexible
-  var hasAirbnb=/airbnb|air bnb|booking|agoda|sejour|location|loyer|revenu|rent/i.test(t);
-  // Commission — flexible
-  var hasCom=/commission|com|%|pourcent|taux/.test(t);
-  // Ajout villa
-  var hasAjout=(/ajouter|nouvel|creer|nouveau|add/.test(t))&&(/villa|propriete|maison|appart/.test(t));
-  // Correction
-  var hasCorrect=/corrig|modif|erreur|rectif|changer|faux|mauvais/.test(t);
-  // Bilan
-  var hasBilan=/bilan|annuel|annee|2024|2025|2026|recap/.test(t);
-  // Salutations
-  var hasBonjour=/bonjour|salut|hello|bonsoir|coucou|hi/.test(t);
-  var hasMerci=/merci|thank|super|parfait|nickel|cool/.test(t);
-  var hasAide=/aide|comment|utiliser|help|\?/.test(t);
-  // Mois — très flexible y compris abréviations et fautes
-  var hasMois=/janv?|fevr?|fev|mars|avr?|mai|juin|juil?|aout|aou|sept?|oct|nov|dec|mois/i.test(t);
-  if(hasBonjour) return 'salut';
-  if(hasMerci) return 'merci';
-  if(hasAide&&!hasNum) return 'aide';
-  if(hasAjout) return 'ajout';
-  if(hasCorrect) return 'correction';
-  if(hasBilan) return 'bilan';
-  if(hasAirbnb&&hasNum&&hasCom) return 'rapport_ok';
-  if(hasAirbnb&&hasNum) return 'rapport_incomplet';
-  if(hasNum&&hasMois) return 'rapport_incomplet';
-  return 'inconnu';
-}
-function parseData(txt){
-  var t = txt;
-  // Extraire nom villa (avant la virgule ou les deux-points)
-  var villaM = t.match(/^([^,:\n]+)[,:]/) || t.match(/villa\s+([^,:\s]+)/i);
-  var villa = villaM ? villaM[1].trim() : 'Villa';
-  // Mois — très flexible, abréviations, fautes
-  var moisRx = /jan(?:vier)?|fev(?:rier)?|f[ée]v|mars?|avr(?:il)?|mai|juin|juil(?:let)?|ao[uû]t?|sep(?:t(?:embre)?)?|oct(?:obre)?|nov(?:embre)?|d[eé]c(?:embre)?/i;
-  var moisM = t.match(moisRx);
-  var mois = moisM ? moisM[0] : 'ce mois';
-  // Année optionnelle
-  var anneeM = t.match(/20\d\d/); if(anneeM) mois += ' '+anneeM[0];
-  // Revenus — ignorer le nb de séjours, prendre le GROS montant après la plateforme
-  var rev=0;
-  // Pattern: plateforme [X séjours/nuits] MONTANT
-  // On cherche le plus grand nombre après la plateforme (le montant, pas le nb de séjours)
-  var revRx=/(?:airbnb|air\s*bnb|booking|agoda|direct|location|loyer|revenu|rent|recette)(?:[^\d]|\d{1,2}(?:\s*s[eé]jours?|\s*nuits?))*(\d[\d\s.,]*)/gi;
-  var rm; while((rm=revRx.exec(t))!==null){
-    var val=parseInt(rm[1].replace(/[\s.,]/g,''));
-    if(val>=1000) rev+=val; // seulement les vrais montants (>=1000 ฿)
-  }
-  // Fallback: chercher tous les nombres >= 1000 qui ne sont pas des dépenses
-  if(rev===0){
-    var allNums=t.match(/\d[\d\s]{3,}/g)||[];
-    allNums.forEach(function(n){ var v=parseInt(n.replace(/\s/g,'')); if(v>=10000) rev=Math.max(rev,v); });
-  }
-  // Dépenses — très flexible
-  var deps=[];
-  var depRx=/(pisci?ni?ste?|piscine|pool|jardini?er?|jardinage|elec(?:tricit[eé])?|electricit[eé]|eau|water|m[eé]nage?|nettoyage|cleaning|entretien|maintenance|r[eé]paration|repare?|internet|wifi|assurance|taxe?|charge|divers)[^\d฿]*(\d[\d\s.]*)/gi;
-  var dm; while((dm=depRx.exec(t))!==null){
-    var val=parseInt(dm[2].replace(/[\s.]/g,''));
-    if(val>0) deps.push({n:dm[1].charAt(0).toUpperCase()+dm[1].slice(1),v:val});
-  }
-  var totalDep=deps.reduce(function(s,d){return s+d.v;},0);
-  // Commission — très flexible: com, commission, %, taux
-  var cpM=t.match(/(?:commission|com(?:ission)?|taux)[^\d]*(\d+)\s*%/i)||t.match(/(\d+)\s*%/);
-  var cp=cpM?parseInt(cpM[1]):0;
-  var com=rev>0&&cp>0?Math.round(rev*cp/100):0;
-  var net=rev-totalDep-com;
-  return {villa:villa,mois:mois,rev:rev,deps:deps,totalDep:totalDep,cp:cp,com:com,net:net};
-}
+// ══ BUILD CARD (utilisée dans modales résultats) ══
 function buildCard(r){
   if(!r) return '';
   if(!r.deps) r.deps=[];
@@ -1235,56 +1053,7 @@ function buildCard(r){
   window._rapports[rid] = r;
   return '<div class="rc"><div class="rct">📊 '+r.villa+' · '+r.mois+'</div>'+rows+'<div class="rb"><button class="rbtn g" id="'+rid+'_btn" onclick="genPDF(this,\''+rid+'\')" style="width:100%;border-radius:6px;">📄 Télécharger PDF</button></div></div>';
 }
-function getReply(txt){
-  var type=analyzeMsg(txt);
-  if(type==='salut') return {d:500,m:'Bonjour ! 👋 Envoyez-moi les chiffres de vos villas et je génère vos rapports. Besoin d\'aide ? Tapez <em>"aide"</em>.'};
-  if(type==='merci') return {d:400,m:'Avec plaisir ! 🙏 N\'hésitez pas si vous avez d\'autres villas à traiter.'};
-  if(type==='aide') return {d:600,m:'Voici comment je fonctionne :<br><br>📨 <strong>Rapport mensuel</strong><br><em>Nom villa, mois : Airbnb X séjours X ฿, électricité X ฿, eau X ฿, ménage X ฿, commission X%</em><br><br>⚡ <strong>Dépenses imprévues</strong> → bouton Divers ci-dessous<br>✏️ <strong>Corriger</strong> → renvoyez les données corrigées'};
-  if(type==='ajout'){return {d:500,m:'Pour ajouter une villa, rendez-vous sur le <strong>Dashboard</strong> et appuyez sur <strong>＋ Ajouter une villa</strong> 🏠'};};
-  if(type==='correction') return {d:500,m:'✏️ Pas de problème ! Renvoyez-moi les données complètes et corrigées, je régénère le rapport immédiatement.'};
-  if(type==='bilan'){var y=(txt.match(/20\d\d/)||['2025'])[0];return {d:800,m:'📅 Pour votre <strong>bilan annuel '+y+'</strong>, contactez ACS :<br><br>📱 +66 91 333 9323<br>✉️ acsconcierge.pro@gmail.com<br><br>Demandez votre bilan annuel directement à votre gestionnaire ACS.'};};
-  if(type==='rapport_ok'){
-    var r=parseData(txt);
-    if(r.rev>0){
-      addToHistory(r);
-      return {d:1400,m:'Rapport généré 🎉'+buildCard(r), rapport:r};
-    }
-    return {d:800,m:'Données reçues mais montants illisibles.<br><em>Format : Villa X, mars : Airbnb 5 séjours 150000 ฿, eau 1500 ฿, commission 20%</em>'};
-  };
-  if(type==='rapport_incomplet'){
-    var r=parseData(txt);
-    if(r.rev>0&&r.cp===0) return {d:700,m:'Données de <strong>'+r.villa+'</strong> reçues ✅<br><br>Il manque le <strong>taux de commission</strong> (ex: 20%). Renvoyez avec cette info !'};
-    if(r.rev>0&&r.cp>0){ addToHistory(r); return {d:1200,m:'Rapport généré 🎉'+buildCard(r),rapport:r}; }
-    return {d:700,m:'Données de <strong>'+r.villa+'</strong> reçues 📋<br><br>Il me manque les <strong>revenus</strong> (ex: Airbnb 5 séjours 150 000 ฿) et/ou le <strong>taux de commission</strong>.<br>Renvoyez le message complet !'};
-  };
-  return {d:700,m:'Je n\'ai pas bien compris 🤔<br><br>Essayez :<br><em>Villa Nom, mois : Airbnb X séjours X ฿, pisciniste X ฿, eau X ฿, commission X%</em>'};
-}
-function sendM(){
-  var inp=document.getElementById('cin');
-  var t=inp.value.trim();
-  if(!t) return;
-  addUser(t); inp.value=''; inp.style.height='auto';
-  var ty=document.createElement('div');
-  ty.className='msg bot';
-  ty.innerHTML='<div class="bb"><div class="typ"><span></span><span></span><span></span></div></div>';
-  document.getElementById('chatmsgs').appendChild(ty);
-  document.getElementById('chatmsgs').scrollTop=99999;
 
-  var apiKey = getApiKey ? getApiKey() : '';
-  if(apiKey){
-    // Appel Claude API
-    callClaude(t, ty);
-  } else {
-    // Fallback assistant basique
-    var resp = getReply(t);
-    if(resp.rapport) window._lastRapport = resp.rapport;
-    setTimeout(function(){
-      ty.remove();
-      addBot(resp.m);
-      saveChatHistory();
-    }, resp.d);
-  }
-}
 // ══ DÉCLARATION MENSUELLE GUIDÉE ══
 const MOIS_LIST = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
@@ -1442,133 +1211,26 @@ function submitDeclaration(){
   });
 
   if(allReports.length===0){
-    setTimeout(function(){
-      addBot('⚠️ Aucun revenu déclaré. Remplissez au moins Airbnb ou Booking pour une villa.');
-    },300);
+    showToast('⚠️ Aucun revenu déclaré — remplissez au moins Airbnb ou Booking');
     return;
   }
 
-  addUser('📋 Déclaration '+periode+' — '+allReports.length+' villa'+(allReports.length>1?'s':''));
-
-  setTimeout(function(){
-    let html='✅ Déclaration <strong>'+periode+'</strong> traitée !<br>';
-    html+='<span style="font-size:.75rem;color:var(--gris);">Cliquez sur l\'onglet Rapports pour télécharger vos PDF.</span><br><br>';
-    allReports.forEach(function(r){ html+=buildCard(r); });
-    addBot(html);
-    saveChatHistory();
-    buildClient(); // Rafraîchir historique
-  },600);
+  // Afficher les résultats dans une modale
+  var cards = allReports.map(function(r){ return buildCard(r); }).join('');
+  document.getElementById('modalbody').innerHTML =
+    '<div class="mh"></div>'
+    +'<div style="text-align:center;margin-bottom:1rem;">'
+      +'<div style="font-size:2rem;margin-bottom:.4rem;">🎉</div>'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Déclaration traitée !</div>'
+      +'<div style="font-size:.72rem;color:var(--gris);margin-top:.25rem;">'+periode+' · '+allReports.length+' villa'+(allReports.length>1?'s':'')+' · Téléchargez vos PDF ci-dessous</div>'
+    +'</div>'
+    + cards
+    +'<button class="cancel-btn" style="margin-top:.8rem;" onclick="closeMov();goPage(\'hist\')">📂 Voir l\'historique</button>'
+    +'<button class="cancel-btn" onclick="closeMov()">Fermer</button>';
+  document.getElementById('modal').classList.add('open');
+  buildClient(); // Rafraîchir dashboard
 }
 
-// ══ APPEL CLAUDE API ══
-function callClaude(userMsg, typingEl){
-  var apiKey = getApiKey();
-  // Construire contexte villas
-  var villasCtx = '';
-  if(CU && CU.villas && CU.villas.length>0){
-    villasCtx = '\n\nVillas du client :\n';
-    CU.villas.forEach(function(v){
-      villasCtx += '- '+v.name;
-      if(v.charges){
-        var ch=Object.entries(v.charges).map(function(e){ return e[0]+': '+e[1]+' ฿'; }).join(', ');
-        if(ch) villasCtx += ' (charges fixes: '+ch+')';
-      }
-      if(v.comPct) villasCtx += ' (commission: '+v.comPct+'%)';
-      villasCtx += '\n';
-    });
-  }
-
-  var systemPrompt = `Tu es l'assistant ACS (Accounting Concierge Services), expert en comptabilité de villas de location à Koh Samui, Thaïlande.
-
-TON RÔLE :
-- Analyser les données financières des villas envoyées par le client
-- Générer des rapports mensuels précis : revenus, dépenses, commission ACS, bénéfice net
-- Répondre en français, de façon claire et professionnelle
-- Être flexible sur l'orthographe et le format — comprendre même les messages approximatifs
-
-FORMAT DE RÉPONSE POUR UN RAPPORT :
-Quand l'utilisateur envoie des chiffres (revenus Airbnb, dépenses, commission), réponds TOUJOURS avec ce JSON exact en plus de ton texte :
-<RAPPORT>{"villa":"NOM","mois":"MOIS ANNÉE","rev":MONTANT,"deps":[{"n":"NOM_DEPENSE","v":MONTANT}],"totalDep":TOTAL,"cp":TAUX_COM,"com":MONTANT_COM,"net":BENEFICE_NET}</RAPPORT>
-
-RÈGLES :
-- Les montants sont en bahts thaïlandais (฿)
-- Commission ACS = % des revenus BRUTS
-- Bénéfice net = revenus - dépenses - commission
-- Si données manquantes, demande UNIQUEMENT ce qui manque (revenus OU commission)
-- Sois bref et direct, max 3-4 lignes de texte
-- Vouvoyer le client
-${villasCtx}`;
-
-  // Construire historique messages (5 derniers)
-  var msgs = [];
-  document.querySelectorAll('#chatmsgs .msg').forEach(function(el){
-    if(el.querySelector('.tdots')) return; // skip typing
-    var role = el.classList.contains('usr') ? 'user' : 'assistant';
-    var text = el.querySelector('.bb').innerText || el.querySelector('.bb').textContent;
-    if(text.trim()) msgs.push({role:role, content:text.trim()});
-  });
-  // Garder les 8 derniers + message actuel
-  if(msgs.length>8) msgs=msgs.slice(msgs.length-8);
-  msgs.push({role:'user', content:userMsg});
-
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify({
-      model:'claude-haiku-4-5-20251001',
-      max_tokens:1024,
-      system: systemPrompt,
-      messages: msgs
-    })
-  })
-  .then(function(res){ return res.json(); })
-  .then(function(data){
-    typingEl.remove();
-    if(data.error){ addBot('❌ Erreur API : '+data.error.message); return; }
-    var text = data.content && data.content[0] ? data.content[0].text : 'Pas de réponse.';
-
-    // Détecter un rapport JSON dans la réponse
-    var rapportMatch = text.match(/<RAPPORT>([\s\S]*?)<\/RAPPORT>/);
-    if(rapportMatch){
-      try{
-        var r = JSON.parse(rapportMatch[1]);
-        // Calculer les manquants
-        if(!r.totalDep) r.totalDep = r.deps ? r.deps.reduce(function(s,d){return s+d.v;},0) : 0;
-        if(!r.com && r.cp && r.rev) r.com = Math.round(r.rev * r.cp / 100);
-        if(!r.net) r.net = r.rev - r.totalDep - (r.com||0);
-        r.pos = r.net >= 0;
-        // Ajouter à l'historique
-        addToHistory(r);
-        // Texte sans le JSON
-        var cleanText = text.replace(/<RAPPORT>[\s\S]*?<\/RAPPORT>/g,'').trim();
-        var msg = (cleanText ? '<p>'+cleanText+'</p>' : '') + buildCard(r);
-        addBot(msg);
-      }catch(e){
-        addBot(text.replace(/<RAPPORT>[\s\S]*?<\/RAPPORT>/g,'').trim());
-      }
-    } else {
-      // Réponse normale — formater le texte
-      var html = text
-        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-        .replace(/\n\n/g,'<br><br>')
-        .replace(/\n/g,'<br>');
-      addBot(html);
-    }
-    saveChatHistory();
-  })
-  .catch(function(err){
-    typingEl.remove();
-    addBot('❌ Erreur de connexion. Vérifiez votre clé API dans Profil → Réglages admin.');
-    console.error('Claude API error:', err);
-  });
-}
-
-function fillC(t){document.getElementById('cin').value=t;document.getElementById('cin').focus();}
 
 // ══ AJOUTER RAPPORT À L'HISTORIQUE ══
 function addToHistory(r){
@@ -1874,10 +1536,10 @@ function genPDF(btn, rid){
 }
 
 
-// ══ CONV ══
-function openConvWith(name){document.getElementById('cvn').textContent=name;document.getElementById('cvs').textContent='En ligne';const m=document.getElementById('cvmsgs');m.innerHTML=`<div class="msg bot"><div class="bb">Bonjour ! Comment puis-je vous aider ?</div><div class="mt">${now()}</div></div>`;document.getElementById('cv').classList.add('open');}
-function closeCV(){document.getElementById('cv').classList.remove('open');}
-function sendCV(){const inp=document.getElementById('cvin');const t=inp.value.trim();if(!t)return;const m=document.getElementById('cvmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML=`<div class="bb">${t}</div><div class="mt">${now()}</div>`;m.appendChild(d);inp.value='';inp.style.height='auto';m.scrollTop=m.scrollHeight;setTimeout(()=>{const r=document.createElement('div');r.className='msg bot';r.innerHTML=`<div class="bb">Bien reçu, je reviens vers vous rapidement 🙏</div><div class="mt">${now()}</div>`;m.appendChild(r);m.scrollTop=m.scrollHeight;},1100);}
+// ══ CONV (simple — pour la page Messages admin/client) ══
+function openConvWith(name){showToast('💬 Contactez '+name+' via WhatsApp ou Email (voir Profil)');}
+function closeCV(){}
+function sendCV(){}
 
 // ══ HISTORIQUE ══
 function buildRapportFromHistory(x){
@@ -1924,7 +1586,7 @@ function histItem(x){
 
 // ══ NAVIGATION ══
 function goPage(p){
-  ['dash','chat','hist','msg','profil'].forEach(x=>{
+  ['dash','hist','msg','profil'].forEach(x=>{
     document.getElementById('pg-'+x).style.display='none';
     const n=document.getElementById('nv-'+x);if(n)n.className='ni';
   });
@@ -1962,10 +1624,6 @@ let toastT;
 function showToast(msg){const el=document.getElementById('toastel');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2300);}
 
 // ══ DIVERS ══
-function openDiversFromChat(){
-  // Appeler openDivers avec le contexte chat
-  openDivers();
-}
 
 function openDivers(){
   document.getElementById('modalbody').innerHTML=`
@@ -2035,98 +1693,37 @@ function saveDivers(){
     }
   }
 
-  const liste=items.map(x=>'• '+x.desc+' : '+fmt(x.amt)).join('\n');
-  addUser('Dépenses diverses ('+villaName+') :\n'+liste+'\nTotal : '+fmt(total));
+  // Afficher résultats dans une modale
+  const ridNew='div_'+Date.now();
+  window._rapports = window._rapports||{};
+  if(rapportMisAJour) window._rapports[ridNew]=rapportMisAJour;
 
-  setTimeout(function(){
-    const ridNew='div_'+Date.now();
-    window._rapports = window._rapports||{};
-    if(rapportMisAJour) window._rapports[ridNew]=rapportMisAJour;
+  let resHtml='<div class="rc"><div class="rct">⚡ Dépenses diverses — '+villaName+'</div>'
+    +items.map(function(x){return '<div class="rr"><span>'+x.desc+'</span><span class="rn">−'+fmt(x.amt)+'</span></div>';}).join('')
+    +'<div class="rr"><span>TOTAL DIVERS</span><span class="rn">−'+fmt(total)+'</span></div>';
+  if(rapportMisAJour){
+    resHtml+='<div class="rr" style="border-top:1px solid rgba(201,149,12,.2);margin-top:.3rem;padding-top:.3rem;">'
+      +'<span style="color:var(--or3);font-weight:600;">Bénéfice net mis à jour</span>'
+      +'<span style="color:'+(rapportMisAJour.net>=0?'#4ade80':'#f87171')+';font-weight:700;">'+(rapportMisAJour.net>=0?'+ ':'')+fmt(rapportMisAJour.net)+'</span></div>';
+    resHtml+='<div class="rb"><button class="rbtn g" onclick="genPDF(this,\''+ridNew+'\')" style="width:100%;border-radius:6px;">📄 Télécharger PDF mis à jour</button></div>';
+  }
+  resHtml+='</div>';
 
-    let html='✅ Dépenses diverses enregistrées — <strong>'+fmt(total)+'</strong> déduits.'
-      +'<div class="rc"><div class="rct">⚡ Dépenses diverses — '+villaName+'</div>'
-      +items.map(function(x){return '<div class="rr"><span>'+x.desc+'</span><span class="rn">−'+fmt(x.amt)+'</span></div>';}).join('')
-      +'<div class="rr"><span>TOTAL DIVERS</span><span class="rn">−'+fmt(total)+'</span></div>';
-
-    if(rapportMisAJour){
-      html+='<div class="rr" style="border-top:1px solid rgba(201,149,12,.2);margin-top:.3rem;padding-top:.3rem;">'
-        +'<span style="color:var(--or3);font-weight:600;">Bénéfice net mis à jour</span>'
-        +'<span style="color:'+(rapportMisAJour.net>=0?'#4ade80':'#f87171')+';font-weight:700;">'+(rapportMisAJour.net>=0?'+ ':'')+fmt(rapportMisAJour.net)+'</span></div>';
-      html+='<div class="rb"><button class="rbtn g" onclick="genPDF(this,\''+ridNew+'\')" style="width:100%;border-radius:6px;">📄 Télécharger PDF mis à jour</button></div>';
-    }
-    html+='</div>';
-    addBot(html);
-    saveChatHistory();
-    // Rafraîchir l'historique
-    buildClient();
-  },800);
+  document.getElementById('modalbody').innerHTML=
+    '<div class="mh"></div>'
+    +'<div style="text-align:center;margin-bottom:1rem;">'
+      +'<div style="font-size:2rem;margin-bottom:.4rem;">✅</div>'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:var(--or3);">Dépenses enregistrées</div>'
+      +'<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">'+fmt(total)+' déduits du rapport</div>'
+    +'</div>'
+    + resHtml
+    +'<button class="cancel-btn" onclick="closeMov()">Fermer</button>';
+  document.getElementById('modal').classList.add('open');
+  buildClient();
 }
 
-// Events
-document.getElementById('cin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendM();}});
-document.getElementById('cvin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCV();}});
 
 // ══ NOTIFICATIONS PUSH 19h BANGKOK ══
-// ══ GESTION CLÉ API CLAUDE ══
-function getApiKey(){ return localStorage.getItem('acs_api_key')||''; }
-
-function updateApiKeyUI(){
-  try {
-    const k = getApiKey();
-    const status = document.getElementById('api-key-status');
-    const badge  = document.getElementById('api-key-badge');
-    const cStatus= document.getElementById('client-ai-status');
-    if(k){
-      if(status){ status.textContent='✅ Configurée — Claude actif'; status.style.color='var(--or3)'; }
-      if(badge) { badge.textContent='Modifier'; badge.style.color='var(--gris)'; }
-      if(cStatus){ cStatus.textContent='✅ Connecté à Claude IA'; cStatus.style.color='var(--or3)'; }
-    } else {
-      if(status){ status.textContent='Non configurée'; status.style.color='var(--gris)'; }
-      if(badge) { badge.textContent='Configurer'; badge.style.color='var(--or3)'; }
-      if(cStatus){ cStatus.textContent='Assistant standard actif'; cStatus.style.color='var(--gris)'; }
-    }
-  } catch(e){ console.log('updateApiKeyUI:', e); }
-}
-
-function openApiKeyModal(){
-  const cur = getApiKey();
-  document.getElementById('modalbody').innerHTML=`
-    <div class="mh"></div>
-    <div style="text-align:center;margin-bottom:1.2rem;">
-      <div style="font-size:2rem;margin-bottom:.4rem;">🤖</div>
-      <div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;color:var(--or3);">Connecter Claude</div>
-      <div style="font-size:.75rem;color:var(--gris);margin-top:.3rem;">L'assistant parlera avec l'IA d'Anthropic</div>
-    </div>
-    <div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.2);border-radius:8px;padding:.8rem;font-size:.74rem;color:var(--gris);margin-bottom:1rem;line-height:1.6;">
-      📍 Obtenez votre clé sur <strong style="color:var(--or3)">console.anthropic.com</strong><br>
-      → API Keys → Create Key<br>
-      💰 Coût estimé : ~1-2$ / mois pour tous vos clients
-    </div>
-    <div class="form-group">
-      <label class="form-label">Clé API Anthropic</label>
-      <input class="form-input" id="apikey-input" type="password" placeholder="sk-ant-api03-..." value="${cur}" style="font-family:monospace;font-size:.78rem;" />
-    </div>
-    <button class="save-btn" onclick="saveApiKey()">✓ Sauvegarder</button>
-    ${cur?'<button class="cancel-btn" onclick="deleteApiKey()" style="margin-top:.4rem;background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);color:#f87171;">🗑 Supprimer la clé</button>':''}
-    <button class="cancel-btn" onclick="closeMov()">Annuler</button>`;
-  document.getElementById('modal').classList.add('open');
-}
-
-function saveApiKey(){
-  const k = document.getElementById('apikey-input').value.trim();
-  if(!k.startsWith('sk-ant')){ showToast('⚠️ Clé invalide — commence par sk-ant'); return; }
-  localStorage.setItem('acs_api_key', k);
-  closeMov();
-  updateApiKeyUI();
-  showToast('✅ Claude connecté ! L\'assistant est maintenant intelligent.');
-}
-
-function deleteApiKey(){
-  localStorage.removeItem('acs_api_key');
-  closeMov();
-  updateApiKeyUI();
-  showToast('🔌 Clé supprimée — assistant basique réactivé');
-}
 
 // ══ SERVICE WORKER + NOTIFICATIONS PUSH 19H ══
 let swReg = null;
@@ -2216,7 +1813,7 @@ function testNotif(){
         av.className = CU.role==='admin' ? 'av adm' : 'av';
         if(CU.role==='admin'){ buildAdmin(); goPage('dash'); }
         else { buildClient(); initNotifications(); goPage('dash'); }
-        buildProfile(); buildThreads(); initChat();
+        buildProfile(); buildThreads();
       });
     }
   } catch(e) { console.log('Session restore error:', e); }
