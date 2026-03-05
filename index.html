@@ -512,10 +512,11 @@ function buildClient(){
 
 // ══ ADMIN ══
 function buildAdmin(){
-  // Recharger CLIENTS et s'assurer que chaque client a son id
+  // Recharger CLIENTS depuis localStorage à chaque appel
   CLIENTS = load('clients', DEFAULT_CLIENTS);
   Object.keys(CLIENTS).forEach(function(k){ if(!CLIENTS[k].id) CLIENTS[k].id = k; });
-  const clients=Object.values(CLIENTS);
+  const clientKeys=Object.keys(CLIENTS);
+  const clients=clientKeys.map(function(k){ return CLIENTS[k]; });
   const totalRev=clients.reduce((s,c)=>s+(c.villas?c.villas.reduce((a,v)=>a+v.rev,0):0),0);
   const totalNet=clients.reduce((s,c)=>s+(c.villas?c.villas.reduce((a,v)=>a+v.net,0):0),0);
   let h=`<div class="h1">Dashboard Admin 👑</div>
@@ -547,7 +548,14 @@ function buildAdmin(){
       </div>
     </div>`;
   });
-  h+=`<button class="add-btn" onclick="openAddClient()">＋  Ajouter un client</button>
+  h+=`<div class="sh" style="margin-top:.8rem;">Rapports</div>
+  <div class="qb" onclick="openRapportAnnuel()" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.05);">
+    <div class="qi" style="background:linear-gradient(135deg,#16a34a,#4ade80);">📊</div>
+    <div class="qt"><strong>Rapport annuel global</strong><small>Bilan complet de l'année en cours</small></div>
+    <div class="qa">›</div>
+  </div>
+  <div class="sh" style="margin-top:.4rem;">Actions</div>
+  <button class="add-btn" onclick="openAddClient()">＋  Ajouter un client</button>
   <button class="add-btn" onclick="openAddVilla('admin')" style="margin-top:.5rem;">🏠  Ajouter une villa à un client</button>`;
   document.getElementById('pg-dash').innerHTML=h;
 
@@ -563,12 +571,48 @@ function buildAdmin(){
 }
 
 function viewClient(id){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
   const c=CLIENTS[id]; if(!c)return;
-  const prev=CU;
-  CU={...c,id};
-  buildClient();
-  CU=prev;
-  showToast(`Vue de ${c.name}`);
+  const villas = c.villas||[];
+  const totalRev=villas.reduce((s,v)=>s+(v.rev||0),0);
+  const totalNet=villas.reduce((s,v)=>s+(v.net||0),0);
+  const totalCom=villas.reduce((s,v)=>s+(v.com||0),0);
+  let h='<div class="mh"></div>';
+  h+='<div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem;">';
+  h+='<div class="av" style="width:42px;height:42px;font-size:.9rem;">'+c.initials+'</div>';
+  h+='<div><div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);font-weight:700;">'+c.name+'</div>';
+  h+='<div style="font-size:.7rem;color:var(--gris);">'+villas.length+' villa'+(villas.length>1?'s':'')+' · ID: '+id+'</div></div></div>';
+  h+='<div class="kr">';
+  h+='<div class="kc"><div class="kl">Revenus</div><div class="kv">'+fmt(totalRev)+'</div></div>';
+  h+='<div class="kc"><div class="kl">Bénéfice net</div><div class="kv" style="color:'+(totalNet>=0?'#4ade80':'#f87171')+'">'+fmt(totalNet)+'</div></div>';
+  h+='</div>';
+  if(villas.length>0){
+    h+='<div class="sh">Villas</div>';
+    villas.forEach(function(v){
+      h+='<div class="vc '+(v.net>=0?'pos':'neg')+'" style="cursor:default;">';
+      h+='<div class="vt"><div><div class="vn">'+v.name+'</div><div class="vp">'+(v.period||'Pas encore déclaré')+'</div></div>';
+      h+='<div class="vnet '+(v.net>=0?'pos':'neg')+'">'+(v.net>=0?'+':'')+fmt(v.net)+'</div></div>';
+      h+='<div class="chips"><div class="chip">Revenus <span>'+fmt(v.rev)+'</span></div><div class="chip">Charges <span>'+fmt((v.dep||0)+(v.chg||0))+'</span></div><div class="chip">Commission <span>'+fmt(v.com)+'</span></div></div>';
+      h+='</div>';
+    });
+  }
+  if(c.history && c.history.length>0){
+    h+='<div class="sh" style="margin-top:.8rem;">Historique</div>';
+    c.history.forEach(function(x){
+      const rapport = buildRapportFromHistory(x);
+      const rid = 'VC_'+(rapport.villa+'_'+rapport.mois).replace(/[^a-zA-Z0-9]/g,'_');
+      window._rapports = window._rapports || {};
+      window._rapports[rid] = rapport;
+      const pos = rapport.net >= 0;
+      h+='<div class="hi" onclick="genPDF(this,\''+rid+'\')" style="cursor:pointer;">';
+      h+='<div class="hico">🏠</div><div style="flex:1;min-width:0;"><div class="hin">'+rapport.villa+'</div><div class="him">'+rapport.mois+'</div></div>';
+      h+='<div class="hr2"><div class="ha" style="color:'+(pos?'#4ade80':'#f87171')+';">'+(pos?'+ ':'')+fmt(rapport.net)+'</div>';
+      h+='<div style="font-size:.62rem;color:var(--or3);font-weight:600;">↓ PDF</div></div></div>';
+    });
+  }
+  h+='<button class="cancel-btn" style="margin-top:1rem;" onclick="closeMov()">Fermer</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
 }
 
 // ══ ADD CLIENT ══
@@ -998,17 +1042,32 @@ function deleteVilla(btn, id){
 
 // ══ THREADS ══
 function buildThreads(){
+  var myId = CU.id || 'admin';
+  var allMsgs = getMessages();
+
   if(CU.role==='admin'){
+    CLIENTS = load('clients', DEFAULT_CLIENTS);
     let h='';
     Object.entries(CLIENTS).forEach(([id,c])=>{
+      const convId = getConvId('admin', id);
+      const convMsgs = allMsgs.filter(function(m){ return m.conv===convId; });
+      const unread = convMsgs.filter(function(m){ return m.to==='admin' && !m.read; }).length;
+      const lastMsg = convMsgs.length>0 ? convMsgs[convMsgs.length-1] : null;
+      const preview = lastMsg ? lastMsg.text.substring(0,40)+(lastMsg.text.length>40?'...':'') : 'Appuyez pour envoyer un message';
+      const timeStr = lastMsg ? lastMsg.time : '—';
       const col='linear-gradient(135deg,#C9950C,#F5D06B)';
-      h+=`<div class="th" onclick="openConvWith('${c.name}')"><div class="tav" style="background:${col}">${c.initials}</div><div class="ti"><div class="tn">${c.name}</div><div class="tp">Appuyez pour envoyer un message</div></div><div class="tm"><div class="tt">—</div></div></div>`;
+      h+=`<div class="th" onclick="openConvWith('${c.name}','${id}')"><div class="tav" style="background:${col}">${c.initials}${unread>0?'<div class="tod"></div>':''}</div><div class="ti"><div class="tn">${c.name}</div><div class="tp">${preview}</div></div><div class="tm"><div class="tt">${timeStr}</div>${unread>0?'<span class="tbadge">'+unread+'</span>':''}</div></div>`;
     });
     document.getElementById('threads').innerHTML=h||'<div style="text-align:center;color:var(--gris);padding:2rem;">Aucun client</div>';
   }else{
+    const convId = getConvId(myId, 'admin');
+    const convMsgs = allMsgs.filter(function(m){ return m.conv===convId; });
+    const unread = convMsgs.filter(function(m){ return m.to===myId && !m.read; }).length;
+    const lastMsg = convMsgs.length>0 ? convMsgs[convMsgs.length-1] : null;
+    const preview = lastMsg ? lastMsg.text.substring(0,45)+(lastMsg.text.length>45?'...':'') : 'Envoyez un message à votre gestionnaire';
+    const timeStr = lastMsg ? lastMsg.time : '—';
     document.getElementById('threads').innerHTML=`
-      <div class="th" onclick="openConvWith('ACS Assistant')"><div class="tav" style="background:linear-gradient(135deg,#C9950C,#F5D06B)">A<div class="tod"></div></div><div class="ti"><div class="tn">ACS — Assistant</div><div class="tp">✅ Rapport généré avec succès</div></div><div class="tm"><div class="tt">09:14</div><span class="tbadge">1</span></div></div>
-      <div class="th" onclick="openConvWith('Alexis — Gestionnaire')"><div class="tav" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">AL</div><div class="ti"><div class="tn">Alexis — Gestionnaire</div><div class="tp">Vos données ont bien été reçues</div></div><div class="tm"><div class="tt">Hier</div></div></div>`;
+      <div class="th" onclick="openConvWith('ACS — Admin','admin')"><div class="tav" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">AB${unread>0?'<div class="tod"></div>':''}</div><div class="ti"><div class="tn">Alexis — Gestionnaire ACS</div><div class="tp">${preview}</div></div><div class="tm"><div class="tt">${timeStr}</div>${unread>0?'<span class="tbadge">'+unread+'</span>':''}</div></div>`;
   }
 }
 
@@ -1337,20 +1396,23 @@ function genPDF(btn, rid){
 
     // Badge statut net
     var netPos = (r.net||0)>=0;
+    var badgeW = 42;
+    var badgeX = W-mg-badgeW-2;
+    var badgeCX = badgeX + badgeW/2;
     doc.setFillColor.apply(doc, netPos ? [20,60,30] : [60,15,15]);
-    doc.roundedRect(W-mg-38,10,36,14,2,2,'F');
+    doc.roundedRect(badgeX,8,badgeW,18,2,2,'F');
     doc.setDrawColor.apply(doc, netPos ? VERT : ROUGE);
     doc.setLineWidth(0.4);
-    doc.roundedRect(W-mg-38,10,36,14,2,2,'S');
+    doc.roundedRect(badgeX,8,badgeW,18,2,2,'S');
     doc.setFont('helvetica','bold');
     doc.setFontSize(7);
     doc.setTextColor.apply(doc, netPos ? VERT : ROUGE);
-    doc.text(netPos ? 'BÉNÉFICE' : 'DÉFICIT', W-mg-20,17,{align:'center'});
+    doc.text(netPos ? 'BENEFICE' : 'DEFICIT', badgeCX,16,{align:'center'});
     var badgeStr = (netPos?'+ ':'')+fmtPDFb(r.net||0);
-    var bFs = 8.5;
+    var bFs = 8;
     doc.setFontSize(bFs);
-    while(bFs > 5.5 && doc.getTextWidth(badgeStr) > 32){ bFs -= 0.4; doc.setFontSize(bFs); }
-    doc.text(badgeStr, W-mg-20, 25, {align:'center'});
+    while(bFs > 5.5 && doc.getTextWidth(badgeStr) > badgeW - 6){ bFs -= 0.4; doc.setFontSize(bFs); }
+    doc.text(badgeStr, badgeCX, 23, {align:'center'});
 
     // Ligne or bas header
     doc.setDrawColor.apply(doc, OR);
@@ -1536,8 +1598,352 @@ function genPDF(btn, rid){
 }
 
 
-// ══ CONV (simple — pour la page Messages admin/client) ══
-function openConvWith(name){showToast('💬 Contactez '+name+' via WhatsApp ou Email (voir Profil)');}
+// ══ RAPPORT ANNUEL GLOBAL ══
+function openRapportAnnuel(){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  const curYear = new Date().getFullYear();
+  const years = {};
+  // Collecter toutes les années disponibles
+  Object.values(CLIENTS).forEach(function(c){
+    if(!c.history) return;
+    c.history.forEach(function(h){
+      const m = (h.period||'').match(/(\d{4})/);
+      if(m) years[m[1]] = true;
+    });
+  });
+  if(!years[curYear]) years[curYear] = true;
+  const yearList = Object.keys(years).sort().reverse();
+
+  let h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:1rem;">';
+  h+='<div style="font-size:2rem;margin-bottom:.4rem;">📊</div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Rapport annuel global</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">Sélectionnez l\'année</div>';
+  h+='</div>';
+  h+='<div class="form-group"><select class="form-select" id="ra-year">';
+  yearList.forEach(function(y){ h+='<option value="'+y+'"'+(y==curYear?' selected':'')+'>'+y+'</option>'; });
+  h+='</select></div>';
+  h+='<button class="save-btn" onclick="genRapportAnnuel()">📄 Générer le rapport annuel</button>';
+  h+='<button class="cancel-btn" onclick="closeMov()">Annuler</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
+}
+
+function genRapportAnnuel(){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  const year = document.getElementById('ra-year').value;
+  const MOIS_NOMS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  // Collecter données par client et par mois
+  const clientData = {};
+  let grandTotalRev=0, grandTotalDep=0, grandTotalCom=0, grandTotalNet=0;
+
+  Object.entries(CLIENTS).forEach(function(entry){
+    const cid=entry[0], c=entry[1];
+    if(!c.history) return;
+    const cInfo = {name:c.name, months:{}, totalRev:0, totalDep:0, totalCom:0, totalNet:0};
+    c.history.forEach(function(h){
+      if(!(h.period||'').includes(year)) return;
+      const rev=h.rev||0, dep=h.dep||0, com=h.com||0, net=h.net||0;
+      const moisName = (h.period||'').replace(' '+year,'').trim();
+      if(!cInfo.months[moisName]) cInfo.months[moisName]={rev:0,dep:0,com:0,net:0,villas:[]};
+      cInfo.months[moisName].rev+=rev;
+      cInfo.months[moisName].dep+=dep;
+      cInfo.months[moisName].com+=com;
+      cInfo.months[moisName].net+=net;
+      cInfo.months[moisName].villas.push(h.name||'Villa');
+      cInfo.totalRev+=rev; cInfo.totalDep+=dep; cInfo.totalCom+=com; cInfo.totalNet+=net;
+    });
+    if(cInfo.totalRev>0 || Object.keys(cInfo.months).length>0){
+      clientData[cid]=cInfo;
+      grandTotalRev+=cInfo.totalRev; grandTotalDep+=cInfo.totalDep;
+      grandTotalCom+=cInfo.totalCom; grandTotalNet+=cInfo.totalNet;
+    }
+  });
+
+  // Afficher résumé dans la modale
+  let h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:1rem;">';
+  h+='<div style="font-size:2rem;margin-bottom:.4rem;">📊</div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Bilan annuel '+year+'</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">'+Object.keys(clientData).length+' client'+(Object.keys(clientData).length>1?'s':'')+' actif'+(Object.keys(clientData).length>1?'s':'')+'</div>';
+  h+='</div>';
+
+  // KPIs
+  h+='<div class="kr">';
+  h+='<div class="kc"><div class="kl">Revenus totaux</div><div class="kv">'+fmt(grandTotalRev)+'</div></div>';
+  h+='<div class="kc"><div class="kl">Bénéfice net</div><div class="kv" style="color:'+(grandTotalNet>=0?'#4ade80':'#f87171')+'">'+fmt(grandTotalNet)+'</div></div>';
+  h+='</div>';
+  h+='<div class="kr">';
+  h+='<div class="kc"><div class="kl">Charges totales</div><div class="kv" style="font-size:1.2rem;color:#f87171;">'+fmt(grandTotalDep)+'</div></div>';
+  h+='<div class="kc"><div class="kl">Commissions</div><div class="kv" style="font-size:1.2rem;">'+fmt(grandTotalCom)+'</div></div>';
+  h+='</div>';
+
+  // Par client
+  Object.entries(clientData).forEach(function(entry){
+    var cid=entry[0], d=entry[1];
+    h+='<div class="cc" style="margin-bottom:.5rem;">';
+    h+='<div class="cct"><div class="ccn">'+d.name+'</div><span class="ccp b">'+fmt(d.totalNet)+'</span></div>';
+    h+='<div class="ccs"><div class="cst">Revenus <span>'+fmt(d.totalRev)+'</span></div><div class="cst">Charges <span style="color:#f87171;">'+fmt(d.totalDep)+'</span></div></div>';
+    // Détail par mois
+    var moisKeys = Object.keys(d.months);
+    moisKeys.sort(function(a,b){ return MOIS_NOMS.indexOf(a)-MOIS_NOMS.indexOf(b); });
+    moisKeys.forEach(function(m){
+      var md=d.months[m];
+      h+='<div style="display:flex;justify-content:space-between;font-size:.72rem;padding:.25rem .4rem;border-bottom:1px solid var(--gris2);">';
+      h+='<span style="color:var(--gris);">'+m+'</span>';
+      h+='<span style="color:'+(md.net>=0?'#4ade80':'#f87171')+';font-weight:600;">'+(md.net>=0?'+':'')+fmt(md.net)+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+
+  if(Object.keys(clientData).length===0){
+    h+='<div style="text-align:center;color:var(--gris);padding:1.5rem;font-size:.85rem;">Aucune donnée pour '+year+'</div>';
+  }
+
+  h+='<button class="save-btn" style="margin-top:.8rem;" onclick="genRapportAnnuelPDF(\''+year+'\')">📄 Télécharger PDF</button>';
+  h+='<button class="cancel-btn" onclick="closeMov()">Fermer</button>';
+  document.getElementById('modalbody').innerHTML=h;
+}
+
+function genRapportAnnuelPDF(year){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  if(!window.jspdf){
+    showToast('⏳ Chargement PDF...');
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=function(){ genRapportAnnuelPDF(year); };
+    document.head.appendChild(s); return;
+  }
+  try{
+    var MOIS_NOMS=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    var W=210, mg=16, y=0;
+    var NOIR=[8,8,8],NOIR2=[18,18,18],OR=[201,149,12],OR3=[245,208,107],BLANC=[242,242,242],GRIS=[120,120,120],ROUGE=[220,60,60],VERT=[74,222,128];
+
+    // Fond
+    doc.setFillColor.apply(doc,NOIR2); doc.rect(0,0,W,297,'F');
+
+    // Header
+    doc.setFillColor.apply(doc,NOIR); doc.rect(0,0,W,48,'F');
+    doc.setFillColor.apply(doc,OR); doc.rect(0,0,3,48,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(28);
+    doc.setTextColor.apply(doc,OR3); doc.text('ACS',mg+4,20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor.apply(doc,GRIS); doc.text('ACCOUNTING CONCIERGE SERVICES',mg+4,27);
+    doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.setTextColor.apply(doc,BLANC); doc.text('Rapport annuel '+year, 82, 20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.setTextColor.apply(doc,GRIS); doc.text('Genere le '+new Date().toLocaleDateString('fr-FR'), 82, 28);
+    doc.setDrawColor.apply(doc,OR); doc.setLineWidth(0.3); doc.line(75,8,75,40);
+    doc.setDrawColor.apply(doc,OR); doc.setLineWidth(0.6); doc.line(0,48,W,48);
+    y=54;
+
+    // Collecter données
+    var grandRev=0,grandDep=0,grandCom=0,grandNet=0;
+    var clientRows=[];
+    Object.entries(CLIENTS).forEach(function(entry){
+      var cid=entry[0],c=entry[1];
+      if(!c.history) return;
+      var cRev=0,cDep=0,cCom=0,cNet=0,mCount=0;
+      c.history.forEach(function(h){
+        if(!(h.period||'').includes(year)) return;
+        cRev+=(h.rev||0); cDep+=(h.dep||0); cCom+=(h.com||0); cNet+=(h.net||0); mCount++;
+      });
+      if(mCount>0){
+        clientRows.push({name:c.name,rev:cRev,dep:cDep,com:cCom,net:cNet,months:mCount});
+        grandRev+=cRev; grandDep+=cDep; grandCom+=cCom; grandNet+=cNet;
+      }
+    });
+
+    // KPI boxes
+    var boxW=(W-2*mg-6)/3, bh=18;
+    function kpiBox(label,val,col,bx){
+      doc.setFillColor(22,22,22); doc.roundedRect(bx,y,boxW,bh,2,2,'F');
+      doc.setDrawColor(45,45,45); doc.setLineWidth(0.2); doc.roundedRect(bx,y,boxW,bh,2,2,'S');
+      var fs=8.5; doc.setFont('helvetica','bold'); doc.setFontSize(fs);
+      doc.setTextColor.apply(doc,col); var vs=String(val);
+      while(fs>5.5&&doc.getTextWidth(vs)>boxW-6){fs-=0.3;doc.setFontSize(fs);}
+      doc.text(vs,bx+boxW/2,y+bh*0.48,{align:'center'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+      doc.setTextColor.apply(doc,GRIS); doc.text(label,bx+boxW/2,y+bh*0.82,{align:'center'});
+    }
+    kpiBox('Revenus bruts',fmtPDFb(grandRev),OR3,mg);
+    kpiBox('Total charges',fmtPDFb(grandDep+grandCom),ROUGE,mg+boxW+3);
+    kpiBox('Benefice net',(grandNet>=0?'+ ':'')+fmtPDFb(grandNet),grandNet>=0?VERT:ROUGE,mg+(boxW+3)*2);
+    y+=bh+8;
+
+    // Section titre
+    function sectTitle(title){
+      y+=3;
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      doc.setTextColor.apply(doc,OR); doc.text(title.toUpperCase(),mg,y);
+      var tw=doc.getTextWidth(title.toUpperCase());
+      doc.setDrawColor.apply(doc,OR); doc.setLineWidth(0.3); doc.line(mg+tw+3,y-1,W-mg,y-1);
+      y+=5;
+    }
+
+    // Tableau clients
+    sectTitle('Detail par client');
+    clientRows.forEach(function(cr){
+      if(y>260){doc.addPage();doc.setFillColor.apply(doc,NOIR2);doc.rect(0,0,W,297,'F');y=16;}
+      // Ligne fond alternée
+      doc.setFillColor(22,22,22); doc.rect(mg,y,W-2*mg,10,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.setTextColor.apply(doc,BLANC); doc.text(cr.name,mg+3,y+6.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.setTextColor.apply(doc,GRIS); doc.text(cr.months+' mois',mg+3+doc.getTextWidth(cr.name+'  '),y+6.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.setTextColor.apply(doc,cr.net>=0?VERT:ROUGE);
+      doc.text((cr.net>=0?'+ ':'')+fmtPDFb(cr.net),W-mg-3,y+6.5,{align:'right'});
+      y+=10;
+      // Sous-détail
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+      doc.setTextColor.apply(doc,GRIS);
+      doc.text('Rev: '+fmtPDFb(cr.rev)+' | Charges: '+fmtPDFb(cr.dep)+' | Com: '+fmtPDFb(cr.com),mg+5,y+4);
+      y+=7;
+    });
+
+    if(clientRows.length===0){
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.setTextColor.apply(doc,GRIS); doc.text('Aucune donnee pour '+year,W/2,y+10,{align:'center'});
+      y+=20;
+    }
+
+    // Total
+    y+=4;
+    var netBoxH=14;
+    doc.setFillColor.apply(doc,grandNet>=0?[10,32,16]:[40,10,10]);
+    doc.roundedRect(mg,y,W-2*mg,netBoxH,2,2,'F');
+    doc.setDrawColor.apply(doc,grandNet>=0?VERT:ROUGE);
+    doc.setLineWidth(0.6); doc.roundedRect(mg,y,W-2*mg,netBoxH,2,2,'S');
+    var netMid=y+netBoxH*0.65;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.setTextColor.apply(doc,grandNet>=0?VERT:ROUGE);
+    doc.text('BENEFICE NET ANNUEL',mg+5,netMid);
+    doc.text((grandNet>=0?'+ ':'- ')+fmtPDFb(Math.abs(grandNet)),W-mg-5,netMid,{align:'right'});
+
+    // Footer
+    doc.setFillColor.apply(doc,NOIR); doc.rect(0,272,W,25,'F');
+    doc.setDrawColor.apply(doc,OR); doc.setLineWidth(0.3); doc.line(0,272,W,272);
+    doc.setFillColor.apply(doc,OR); doc.rect(0,272,3,25,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor.apply(doc,OR3); doc.text('ACS — Accounting Concierge Services',mg+4,281);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setTextColor.apply(doc,GRIS); doc.text('acsconcierge.pro@gmail.com  |  +66 91 333 9323  |  Koh Samui, Thailande',mg+4,288);
+
+    doc.save('ACS_Rapport_Annuel_'+year+'.pdf');
+    showToast('✅ Rapport annuel '+year+' téléchargé !');
+  }catch(e){
+    console.error('PDF annual error',e);
+    showToast('❌ Erreur PDF : '+e.message);
+  }
+}
+
+// ══ MESSAGERIE INTERNE ══
+function getMessages(){ return load('messages', []); }
+function saveMessages(msgs){ save('messages', msgs); }
+
+function getConvId(a, b){
+  // ID de conversation stable entre deux participants
+  return [a,b].sort().join('__');
+}
+
+function openConvWith(name, targetId){
+  // Identifier le destinataire
+  var myId = CU.id || 'admin';
+  var otherId = targetId || '';
+  var otherName = name;
+
+  // Si admin ouvre une conv avec un client, trouver l'id
+  if(CU.role==='admin' && !otherId){
+    Object.entries(CLIENTS).forEach(function(e){
+      if(e[1].name === name) otherId = e[0];
+    });
+  }
+  // Si client ouvre conv, le destinataire est admin
+  if(CU.role!=='admin'){
+    otherId = 'admin';
+    otherName = 'ACS — Admin';
+  }
+  if(!otherId){ showToast('❌ Destinataire introuvable'); return; }
+
+  var convId = getConvId(myId, otherId);
+  var allMsgs = getMessages();
+  var convMsgs = allMsgs.filter(function(m){ return m.conv === convId; });
+
+  // Marquer les messages reçus comme lus
+  var changed = false;
+  allMsgs.forEach(function(m){
+    if(m.conv === convId && m.to === myId && !m.read){ m.read = true; changed = true; }
+  });
+  if(changed) saveMessages(allMsgs);
+
+  var h='<div class="mh"></div>';
+  h+='<div style="display:flex;align-items:center;gap:.7rem;padding-bottom:.8rem;border-bottom:1px solid var(--gris2);margin-bottom:.8rem;">';
+  h+='<div class="av" style="width:38px;height:38px;font-size:.8rem;">'+(CU.role==='admin'?(CLIENTS[otherId]?CLIENTS[otherId].initials:'?'):'AB')+'</div>';
+  h+='<div><div style="font-weight:600;font-size:.92rem;">'+otherName+'</div>';
+  h+='<div style="font-size:.65rem;color:var(--gris);">Messagerie interne ACS</div></div></div>';
+
+  // Zone messages
+  h+='<div id="conv-messages" style="max-height:45vh;overflow-y:auto;padding:.5rem 0;margin-bottom:.8rem;">';
+  if(convMsgs.length===0){
+    h+='<div style="text-align:center;color:var(--gris);font-size:.78rem;padding:2rem 0;">Aucun message. Écrivez le premier !</div>';
+  } else {
+    convMsgs.forEach(function(m){
+      var isMine = m.from === myId;
+      h+='<div style="display:flex;justify-content:'+(isMine?'flex-end':'flex-start')+';margin-bottom:.5rem;">';
+      h+='<div style="max-width:80%;padding:.55rem .8rem;border-radius:'+(isMine?'10px 10px 2px 10px':'10px 10px 10px 2px')+';background:'+(isMine?'linear-gradient(135deg,rgba(201,149,12,.15),rgba(201,149,12,.08))':'var(--noir3)')+';border:1px solid '+(isMine?'rgba(201,149,12,.3)':'var(--gris2)')+';font-size:.82rem;line-height:1.45;">';
+      h+='<div>'+m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+      h+='<div style="font-size:.58rem;color:var(--gris);margin-top:.25rem;text-align:right;">'+m.time+'</div>';
+      h+='</div></div>';
+    });
+  }
+  h+='</div>';
+
+  // Zone saisie
+  h+='<div style="display:flex;gap:.5rem;align-items:flex-end;">';
+  h+='<textarea id="conv-input" class="form-input" placeholder="Votre message..." rows="2" style="flex:1;resize:none;min-height:40px;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessage(\''+convId+'\',\''+myId+'\',\''+otherId+'\',\''+otherName.replace(/'/g,"\\'")+'\');}"></textarea>';
+  h+='<button onclick="sendMessage(\''+convId+'\',\''+myId+'\',\''+otherId+'\',\''+otherName.replace(/'/g,"\\'")+'\') " style="background:linear-gradient(135deg,var(--or),var(--or3));border:none;color:var(--noir);width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1.1rem;flex-shrink:0;">➤</button>';
+  h+='</div>';
+  h+='<button class="cancel-btn" style="margin-top:.6rem;" onclick="closeMov();buildThreads();">Fermer</button>';
+
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
+
+  // Scroll en bas
+  setTimeout(function(){
+    var el=document.getElementById('conv-messages');
+    if(el) el.scrollTop=el.scrollHeight;
+  },100);
+}
+
+function sendMessage(convId, fromId, toId, otherName){
+  var input = document.getElementById('conv-input');
+  var text = (input?input.value:'').trim();
+  if(!text) return;
+
+  var allMsgs = getMessages();
+  var now2 = new Date();
+  var timeStr = now2.getHours()+':'+String(now2.getMinutes()).padStart(2,'0');
+  allMsgs.push({
+    conv: convId,
+    from: fromId,
+    to: toId,
+    text: text,
+    time: timeStr,
+    date: now2.toLocaleDateString('fr-FR'),
+    read: false
+  });
+  saveMessages(allMsgs);
+
+  // Rouvrir la conversation pour rafraîchir
+  var name = otherName;
+  openConvWith(name, toId);
+}
+
 function closeCV(){}
 function sendCV(){}
 
