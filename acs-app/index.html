@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ACS">
+<title>ACS — Accounting Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#080808;--noir2:#121212;--noir3:#1c1c1c;--noir4:#242424;
+  --or:#C9950C;--or2:#E8B84B;--or3:#F5D06B;
+  --blanc:#f8f6f0;--gris:#777;--gris2:#2a2a2a;--gris3:#444;
+  --vert:#16a34a;--rouge:#dc2626;--violet:#7c3aed;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--blanc);height:100vh;overflow:hidden;}
+.screen{display:none;flex-direction:column;height:100vh;}
+.screen.active{display:flex;}
+
+/* LOGIN */
+#login{align-items:center;justify-content:center;position:relative;overflow:hidden;}
+#login::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(201,149,12,.1) 0%,transparent 70%);top:-80px;right:-80px;pointer-events:none;z-index:0;}
+.lw{width:100%;max-width:320px;padding:2rem;z-index:10;position:relative;}
+.ll{font-family:'Cormorant Garamond',serif;font-size:4rem;font-weight:700;color:var(--or3);letter-spacing:.15em;text-align:center;line-height:1;animation:fD .6s ease both;}
+.lt{text-align:center;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);margin:.3rem 0 .6rem;animation:fD .6s .1s ease both;opacity:0;animation-fill-mode:both;}
+.ld{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--or),transparent);margin:.5rem auto 1.8rem;animation:fD .6s .2s ease both;opacity:0;animation-fill-mode:both;}
+@keyframes fD{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fU{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fI{from{opacity:0;}to{opacity:1;}}
+.fl{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gris);margin-bottom:.35rem;}
+.fi{width:100%;background:var(--noir2);border:1px solid var(--gris2);color:var(--blanc);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:.75rem .9rem;border-radius:var(--r);outline:none;transition:border-color .2s;margin-bottom:1.1rem;animation:fU .6s .3s ease both;opacity:0;animation-fill-mode:both;}
+.fi:focus{border-color:var(--or);}
+.fi::placeholder{color:var(--gris3);}
+.ps{animation:fU .6s .35s ease both;opacity:0;animation-fill-mode:both;}
+.pd{display:flex;justify-content:center;gap:.7rem;margin-bottom:1.6rem;}
+.dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--gris3);transition:all .18s;}
+.dot.on{background:var(--or3);border-color:var(--or3);transform:scale(1.1);}
+.dot.err{background:var(--rouge);border-color:var(--rouge);}
+.dot.ok{background:var(--vert);border-color:var(--vert);}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;max-width:240px;margin:0 auto;}
+.pk{background:var(--noir2);border:1px solid var(--gris2);color:var(--blanc);font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;padding:.85rem;border-radius:var(--r);cursor:pointer;text-align:center;transition:all .15s;user-select:none;}
+.pk:active{background:var(--noir3);border-color:var(--or);color:var(--or3);transform:scale(.93);}
+.pk.del{font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--gris);}
+.pk.z{grid-column:2;}
+.lh{text-align:center;font-size:.68rem;color:var(--gris);margin-top:1.3rem;animation:fI .6s .6s both;line-height:1.6;}
+.lh strong{color:var(--or3);}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-5px);}40%,80%{transform:translateX(5px);}}
+.shake{animation:shake .35s ease;}
+
+/* TOPBAR */
+.tb{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;position:relative;z-index:10;}
+.tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--or),transparent);opacity:.35;}
+.tl{font-family:'Cormorant Garamond',serif;font-size:1.65rem;font-weight:700;color:var(--or3);letter-spacing:.1em;}
+.tr{display:flex;align-items:center;gap:.6rem;}
+.av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--or),var(--or3));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:var(--noir);cursor:pointer;flex-shrink:0;}
+.av.adm{background:linear-gradient(135deg,var(--violet),#a855f7);}
+.nb{background:none;border:none;color:var(--gris);font-size:1rem;cursor:pointer;position:relative;padding:.2rem;}
+.nd{position:absolute;top:0;right:0;width:6px;height:6px;border-radius:50%;background:var(--or);border:1px solid var(--noir2);}
+
+/* NAV */
+.nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--noir2);border-top:1px solid var(--gris2);z-index:100;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem 0;cursor:pointer;color:var(--gris);transition:color .2s;border:none;background:none;position:relative;}
+.ni.on{color:var(--or3);}
+.ni.on::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--or3),transparent);}
+.ni svg{width:18px;height:18px;margin-bottom:2px;}
+.ni span{font-size:.52rem;letter-spacing:.05em;text-transform:uppercase;}
+
+/* CONTENT */
+.ct{flex:1;overflow-y:auto;padding:1rem 1rem 5.5rem;-webkit-overflow-scrolling:touch;}
+.ct::-webkit-scrollbar{width:0;}
+
+/* TYPOGRAPHY */
+.h1{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:600;color:var(--or3);line-height:1.1;}
+.sub{font-size:.75rem;color:var(--gris);margin-top:.15rem;margin-bottom:1.3rem;}
+.sh{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris);margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;}
+.sh::after{content:'';flex:1;height:1px;background:var(--gris2);}
+
+/* KPI */
+.kr{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.2rem;}
+.kc{background:var(--noir2);border:1px solid var(--gris2);border-radius:var(--r);padding:.85rem;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--or),var(--or3));}
+.kl{font-size:.58rem;color:var(--gris);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem;}
+.kv{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--or3);}
+.kd{font-size:.65rem;color:var(--gris);margin-top:.1rem;}
+.kd.up{color:#4ade80;}
+
+/* CARDS */
+.vc{background:var(--noir2);border:1px solid var(--gris2);border-radius:var(--r);padding:.85rem .95rem;margin-bottom:.65rem;cursor:pointer;transition:transform .15s,border-color .2s;border-left:3px solid transparent;}
+.vc:active{transform:scale(.985);}
+.vc.pos{border-left-color:var(--vert);}
+.vc.neg{border-left-color:var(--rouge);}
+.vt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.45rem;}
+.vn{font-weight:600;font-size:.92rem;}
+.vp{font-size:.65rem;color:var(--gris);margin-top:1px;}
+.vnet{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;}
+.vnet.pos{color:#4ade80;}
+.vnet.neg{color:#f87171;}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;}
+.chip{font-size:.6rem;color:var(--gris);background:var(--noir3);padding:2px 6px;border-radius:20px;}
+.chip span{color:var(--blanc);font-weight:500;}
+.vbars{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.35rem;margin-top:.55rem;}
+.bl2{font-size:.56rem;color:var(--gris);margin-bottom:2px;}
+.bt2{height:3px;background:var(--gris2);border-radius:2px;overflow:hidden;}
+.bf{height:100%;border-radius:2px;}
+.bf.r{background:var(--or);}
+.bf.d{background:#ef4444;}
+.bf.n{background:#4ade80;}
+
+/* QUICK BTN */
+.qb{display:flex;align-items:center;gap:.85rem;background:linear-gradient(135deg,rgba(201,149,12,.1),rgba(201,149,12,.04));border:1px solid rgba(201,149,12,.35);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:1.2rem;cursor:pointer;transition:opacity .2s;}
+.qb:active{opacity:.75;}
+.qi{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--or),var(--or3));display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
+.qt strong{display:block;font-size:.88rem;color:var(--blanc);}
+.qt small{font-size:.7rem;color:var(--gris);}
+.qa{margin-left:auto;color:var(--or);font-size:1.2rem;}
+
+/* ADMIN */
+.abadge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;background:rgba(124,58,237,.12);border:1px solid rgba(168,85,247,.35);border-radius:20px;font-size:.65rem;color:#c084fc;margin-bottom:1.1rem;}
+.ak3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem;margin-bottom:1.2rem;}
+.ak{background:var(--noir2);border:1px solid var(--gris2);border-radius:var(--r);padding:.7rem .5rem;text-align:center;}
+.akv{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:700;color:var(--or3);}
+.akl{font-size:.55rem;color:var(--gris);letter-spacing:.08em;text-transform:uppercase;margin-top:1px;}
+.cc{background:var(--noir2);border:1px solid var(--gris2);border-radius:var(--r);padding:.85rem .95rem;margin-bottom:.65rem;}
+.cct{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;}
+.ccn{font-weight:600;font-size:.92rem;}
+.ccp{font-size:.6rem;padding:.18rem .55rem;border-radius:20px;font-weight:500;}
+.ccp.b{background:rgba(201,149,12,.12);color:var(--or3);border:1px solid rgba(201,149,12,.3);}
+.ccp.s{background:rgba(29,78,216,.12);color:#93c5fd;border:1px solid rgba(29,78,216,.3);}
+.ccp.p{background:rgba(124,58,237,.12);color:#c084fc;border:1px solid rgba(124,58,237,.3);}
+.ccs{display:flex;gap:.7rem;margin-bottom:.6rem;}
+.cst{font-size:.68rem;color:var(--gris);}
+.cst span{color:var(--blanc);font-weight:500;}
+.cca{display:flex;gap:.4rem;}
+.cb{flex:1;padding:.42rem;border-radius:6px;font-size:.65rem;font-weight:600;cursor:pointer;border:none;text-align:center;transition:opacity .2s;}
+.cb:active{opacity:.8;}
+.cb.v{background:var(--gris2);color:var(--blanc);}
+.cb.m{background:rgba(201,149,12,.12);color:var(--or3);border:1px solid rgba(201,149,12,.3);}
+.cb.r2{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);}
+.cb.del{background:rgba(220,38,38,.1);color:#f87171;border:1px solid rgba(220,38,38,.25);}
+
+/* ADD CLIENT BTN */
+.add-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.85rem;background:transparent;border:1px dashed rgba(201,149,12,.4);border-radius:var(--r);color:var(--or3);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;margin-top:.3rem;}
+.add-btn:active{background:rgba(201,149,12,.08);}
+
+/* CHAT */
+.cw{display:flex;flex-direction:column;height:calc(100vh - 56px - 56px);overflow:hidden;}
+.ch{padding:.8rem 1rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;}
+.chn{font-weight:600;font-size:.9rem;}
+.cho{font-size:.67rem;color:#4ade80;display:flex;align-items:center;gap:3px;}
+.cho::before{content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;display:inline-block;}
+.cm{flex:1;overflow-y:auto;padding:.85rem .9rem;display:flex;flex-direction:column;gap:.65rem;}
+.cm::-webkit-scrollbar{width:0;}
+.msg{max-width:83%;display:flex;flex-direction:column;gap:2px;}
+.msg.bot{align-self:flex-start;}
+.msg.usr{align-self:flex-end;}
+.bb{padding:.65rem .85rem;border-radius:11px;font-size:.83rem;line-height:1.5;}
+.bot .bb{background:var(--noir2);border:1px solid var(--gris2);border-radius:4px 11px 11px 11px;}
+.usr .bb{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);font-weight:500;border-radius:11px 11px 4px 11px;}
+.mt{font-size:.56rem;color:var(--gris);}
+.bot .mt{text-align:left;}
+.usr .mt{text-align:right;}
+.rc{background:var(--noir3);border:1px solid var(--or);border-radius:8px;padding:.7rem;margin-top:.35rem;}
+.rct{font-size:.72rem;font-weight:600;color:var(--or3);margin-bottom:.35rem;}
+.rr{display:flex;justify-content:space-between;font-size:.73rem;padding:2px 0;border-bottom:1px solid var(--gris2);}
+.rr:last-of-type{border:none;font-weight:700;color:var(--or3);}
+.rn{color:#f87171;}
+.rb{display:flex;gap:.35rem;margin-top:.55rem;}
+.rbtn{flex:1;padding:.4rem;border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;border:none;}
+.rbtn.g{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);}
+.rbtn.s{background:var(--gris2);color:var(--blanc);}
+.sugs{display:flex;gap:.4rem;padding:.45rem .8rem;overflow-x:auto;background:var(--noir2);border-top:1px solid var(--gris2);flex-shrink:0;scrollbar-width:none;}
+.sugs::-webkit-scrollbar{width:0;}
+.sg{flex-shrink:0;padding:.3rem .7rem;background:var(--noir3);border:1px solid var(--gris2);border-radius:16px;font-size:.68rem;color:var(--gris);cursor:pointer;white-space:nowrap;}
+.sg:active{background:rgba(201,149,12,.12);border-color:var(--or);color:var(--or3);}
+.cbar{padding:.65rem .85rem;background:var(--noir2);border-top:1px solid var(--gris2);display:flex;gap:.45rem;align-items:flex-end;flex-shrink:0;}
+.cin{flex:1;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);font-family:'DM Sans',sans-serif;font-size:.83rem;padding:.58rem .8rem;border-radius:17px;outline:none;resize:none;max-height:85px;transition:border-color .2s;line-height:1.4;}
+.cin:focus{border-color:var(--or);}
+.sbtn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--or),var(--or3));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sbtn:active{transform:scale(.9);}
+.sbtn svg{width:15px;height:15px;fill:var(--noir);}
+.typ{display:flex;gap:3px;align-items:center;padding:.35rem 0;}
+.typ span{width:5px;height:5px;border-radius:50%;background:var(--gris);animation:b 1.1s infinite;}
+.typ span:nth-child(2){animation-delay:.18s;}
+.typ span:nth-child(3){animation-delay:.36s;}
+@keyframes b{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+
+/* HISTORIQUE */
+.mg{margin-bottom:1.3rem;}
+.ml{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris);margin-bottom:.55rem;display:flex;align-items:center;gap:.4rem;}
+.ml::after{content:'';flex:1;height:1px;background:var(--gris2);}
+.hi{display:flex;align-items:center;gap:.75rem;background:var(--noir2);border:1px solid var(--gris2);border-radius:var(--r);padding:.75rem .85rem;margin-bottom:.45rem;cursor:pointer;}
+.hi:active{border-color:var(--or);}
+.hico{width:34px;height:34px;border-radius:7px;background:rgba(201,149,12,.08);border:1px solid rgba(201,149,12,.25);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.hin{font-size:.85rem;font-weight:600;margin-bottom:1px;}
+.him{font-size:.65rem;color:var(--gris);}
+.hr2{text-align:right;}
+.ha{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;}
+.ft{display:inline-block;padding:1px 5px;background:var(--gris2);border-radius:3px;font-size:.55rem;margin-right:2px;color:var(--gris);}
+
+/* MESSAGES */
+.th{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid var(--gris2);cursor:pointer;}
+.th:active{background:var(--noir2);}
+.tav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:var(--noir);flex-shrink:0;position:relative;}
+.tod{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#4ade80;border:2px solid var(--noir);}
+.ti{flex:1;min-width:0;}
+.tn{font-size:.88rem;font-weight:600;margin-bottom:2px;}
+.tp{font-size:.73rem;color:var(--gris);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tm{text-align:right;flex-shrink:0;}
+.tt{font-size:.63rem;color:var(--gris);margin-bottom:3px;}
+.tbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;background:var(--or);color:var(--noir);font-size:.6rem;font-weight:700;padding:0 3px;}
+
+/* CONV */
+#cv{display:none;flex-direction:column;position:fixed;inset:0;background:var(--noir);z-index:200;}
+#cv.open{display:flex;}
+.cvb{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;background:var(--noir2);border-bottom:1px solid var(--gris2);flex-shrink:0;}
+.bk{background:none;border:none;color:var(--or3);font-size:1.4rem;cursor:pointer;line-height:1;}
+.cvi{flex:1;}
+.cvn{font-weight:600;font-size:.88rem;}
+.cvs{font-size:.68rem;color:#4ade80;}
+
+/* PROFIL */
+.ph{text-align:center;padding:1.7rem 1rem 1.2rem;background:var(--noir2);border-bottom:1px solid var(--gris2);margin:-1rem -1rem 1.2rem;}
+.pav{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--noir);margin:0 auto .65rem;}
+.pn{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--or3);}
+.pr{font-size:.73rem;color:var(--gris);margin-top:.15rem;}
+.pp{display:inline-flex;align-items:center;gap:.3rem;margin-top:.65rem;padding:.22rem .75rem;background:rgba(201,149,12,.08);border:1px solid rgba(201,149,12,.25);border-radius:20px;font-size:.7rem;color:var(--or3);}
+.mi{display:flex;align-items:center;gap:.8rem;padding:.8rem 0;border-bottom:1px solid var(--gris2);cursor:pointer;}
+.mii{width:32px;height:32px;border-radius:7px;background:var(--noir2);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.mit{flex:1;}
+.miT{font-size:.86rem;font-weight:500;}
+.miD{font-size:.68rem;color:var(--gris);margin-top:1px;}
+.lob{width:100%;padding:.82rem;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);color:#f87171;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.1em;border-radius:var(--r);cursor:pointer;margin-top:.9rem;}
+
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:flex-end;}
+.mov.open{display:flex;}
+.ms{background:var(--noir2);border-radius:14px 14px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:1.2rem 1rem 2.5rem;animation:sU .25s ease;}
+@keyframes sU{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.mh{width:28px;height:3px;border-radius:2px;background:var(--gris2);margin:0 auto .9rem;}
+.mt2{font-family:'Cormorant Garamond',serif;font-size:1.45rem;color:var(--or3);margin-bottom:.15rem;}
+.mp{font-size:.73rem;color:var(--gris);margin-bottom:1rem;}
+.ds{margin-bottom:.85rem;}
+.dh{display:flex;justify-content:space-between;padding:.42rem .75rem;background:var(--noir3);border-radius:5px;font-size:.76rem;font-weight:600;color:var(--or3);margin-bottom:.18rem;}
+.dr{display:flex;justify-content:space-between;padding:.3rem .75rem;font-size:.78rem;border-bottom:1px solid var(--gris2);}
+.dr:last-child{border:none;}
+.dr .v{color:var(--blanc);}
+.nb2{display:flex;justify-content:space-between;align-items:center;padding:.85rem .95rem;border-radius:var(--r);margin:.9rem 0;}
+.nb2.pos{background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);}
+.nb2.neg{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);}
+.nl{font-size:.75rem;font-weight:600;}
+.na{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:700;}
+.nb2.pos .na{color:#4ade80;}
+.nb2.neg .na{color:#f87171;}
+.mbs{display:flex;gap:.65rem;margin-top:.9rem;}
+.mb{flex:1;padding:.78rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:.05em;cursor:pointer;border:none;}
+.mb:active{opacity:.8;}
+.mb.g{background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);}
+.mb.o{background:transparent;border:1px solid var(--gris2);color:var(--blanc);}
+
+/* ADD CLIENT MODAL */
+.form-group{margin-bottom:.9rem;}
+.form-label{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);margin-bottom:.35rem;display:block;}
+.form-input{width:100%;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);font-family:'DM Sans',sans-serif;font-size:.88rem;padding:.7rem .85rem;border-radius:var(--r);outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--or);}
+.form-input::placeholder{color:var(--gris3);}
+.form-select{width:100%;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);font-family:'DM Sans',sans-serif;font-size:.88rem;padding:.7rem .85rem;border-radius:var(--r);outline:none;appearance:none;cursor:pointer;}
+.form-select:focus{border-color:var(--or);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.save-btn{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.1em;border:none;border-radius:var(--r);cursor:pointer;margin-top:.5rem;}
+.save-btn:active{opacity:.85;}
+.cancel-btn{width:100%;padding:.7rem;background:transparent;border:1px solid var(--gris2);color:var(--gris);font-family:'DM Sans',sans-serif;font-size:.8rem;border-radius:var(--r);cursor:pointer;margin-top:.4rem;}
+.delete-zone{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:var(--r);padding:.8rem;margin-top:1rem;}
+.delete-zone-title{font-size:.7rem;font-weight:600;color:#f87171;margin-bottom:.5rem;}
+.del-btn{width:100%;padding:.65rem;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#f87171;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;border-radius:6px;cursor:pointer;}
+.pin-display{display:flex;justify-content:center;gap:.5rem;margin:.4rem 0 .6rem;}
+.pin-circle{width:38px;height:38px;border-radius:50%;background:var(--noir3);border:2px solid var(--gris2);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--or3);}
+
+/* TOAST */
+.plat-chip{padding:.35rem .75rem;border-radius:20px;font-size:.72rem;background:var(--noir3);border:1px solid var(--gris2);color:var(--gris);cursor:pointer;transition:all .2s;}
+.plat-chip.on{background:rgba(201,149,12,.15);border-color:var(--or);color:var(--or3);}
+.charge-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem;}
+.charge-name{font-size:.8rem;color:var(--blanc);width:120px;flex-shrink:0;}
+.charge-input{flex:1;}
+.nbr-chip{width:38px;height:38px;border-radius:50%;background:var(--noir3);border:1px solid var(--gris2);color:var(--gris);display:flex;align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;transition:all .2s;}
+.nbr-chip.on{background:rgba(201,149,12,.15);border-color:var(--or);color:var(--or3);}
+.toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:var(--noir2);border:1px solid var(--or);color:var(--or3);padding:.5rem 1rem;border-radius:20px;font-size:.76rem;opacity:0;pointer-events:none;transition:opacity .22s;z-index:500;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* Confirm modal */
+.confirm-box{background:var(--noir2);border:1px solid var(--gris2);border-radius:14px;padding:1.5rem 1.2rem;max-width:300px;width:90%;margin:auto;}
+.confirm-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--or3);text-align:center;margin-bottom:.4rem;}
+.confirm-sub{font-size:.78rem;color:var(--gris);text-align:center;margin-bottom:1.2rem;line-height:1.5;}
+.confirm-btns{display:flex;gap:.6rem;}
+.cb2{flex:1;padding:.75rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border:none;}
+.cb2.yes{background:var(--rouge);color:var(--blanc);}
+.cb2.no{background:var(--gris2);color:var(--blanc);}
+</style>
+<script>
+// Fonctions PIN - déclarées tôt pour être disponibles immédiatement
+var pin = '';
+function pk(k){if(pin.length>=4)return;pin+=k;updDots();if(pin.length===4)setTimeout(tryLogin,150);}
+function pdel(){pin=pin.slice(0,-1);updDots();}
+function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.className='dot'+(i<pin.length?' on':'');}}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="screen active">
+  <div class="lw">
+    <div class="ll">ACS</div>
+    <div class="lt">Accounting Concierge Services</div>
+    <div class="ld"></div>
+    <div class="fl">Identifiant</div>
+    <input class="fi" type="text" id="lid" placeholder="Ex : almon.eye" autocomplete="off" autocapitalize="off">
+    <div class="ps">
+      <div class="fl" style="text-align:center;margin-bottom:.8rem;">Code PIN</div>
+      <div class="pd" id="pdots"><div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div></div>
+      <div class="pg" id="pgrid">
+        <button type="button" class="pk" onclick="pk('1')">1</button><button type="button" class="pk" onclick="pk('2')">2</button><button type="button" class="pk" onclick="pk('3')">3</button>
+        <button type="button" class="pk" onclick="pk('4')">4</button><button type="button" class="pk" onclick="pk('5')">5</button><button type="button" class="pk" onclick="pk('6')">6</button>
+        <button type="button" class="pk" onclick="pk('7')">7</button><button type="button" class="pk" onclick="pk('8')">8</button><button type="button" class="pk" onclick="pk('9')">9</button>
+        <button type="button" class="pk z" onclick="pk('0')">0</button><button type="button" class="pk del" onclick="pdel()">⌫</button>
+      </div>
+    </div>
+
+  </div>
+    <div style="text-align:center;margin-top:1rem;">
+      <span onclick="openResetPin()" style="font-size:.7rem;color:var(--gris);cursor:pointer;text-decoration:underline;">PIN oublié ?</span>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="screen">
+  <div class="tb">
+    <div class="tl">ACS</div>
+    <div class="tr">
+      <button class="nb" onclick="showToast('Aucune nouvelle notification')">🔔<span class="nd"></span></button>
+      <div class="av" id="topav" onclick="goPage('profil')">?</div>
+    </div>
+  </div>
+  <div id="pg-dash" class="ct"></div>
+  <div id="pg-chat" class="ct" style="padding:0;"><div class="cw"><div class="ch"><div class="chn">Assistant ACS</div><div class="cho">En ligne — répond instantanément</div></div><div class="cm" id="chatmsgs"></div><div class="sugs"><div class="sg" onclick="fillC('Toutes mes villas ce mois')">📊 Toutes villas</div><div class="sg" onclick="fillC('Bilan annuel 2025')">📅 Bilan annuel</div></div><div class="cbar"><textarea class="cin" id="cin" placeholder="Ex: Villa X, mars : Airbnb 2 séjours 50 000 ฿, électricité 3 000 ฿, eau 1 500 ฿, ménage 2 000 ฿, commission 20%" rows="1" oninput="aR(this)"></textarea><button class="sbtn" onclick="sendM()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div></div></div>
+  <div id="pg-hist" class="ct"></div>
+  <div id="pg-msg" class="ct" style="padding:0;"><div style="padding:1rem 1rem .5rem;"><div class="h1">Messages</div><div class="sub">Communication avec votre conciergerie</div></div><div id="threads"></div></div>
+  <div id="pg-profil" class="ct"></div>
+  <nav class="nav">
+    <button class="ni on" onclick="goPage('dash')" id="nv-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
+    <button class="ni" onclick="goPage('chat')" id="nv-chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Assistant</span></button>
+    <button class="ni" onclick="goPage('hist')" id="nv-hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Rapports</span></button>
+    <button class="ni" onclick="goPage('msg')" id="nv-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span>Messages</span></button>
+    <button class="ni" onclick="goPage('profil')" id="nv-profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
+  </nav>
+</div>
+
+<!-- CONV VIEW -->
+<div id="cv"><div class="cvb"><button class="bk" onclick="closeCV()">‹</button><div class="cvi"><div class="cvn" id="cvn"></div><div class="cvs" id="cvs"></div></div></div><div class="cm" id="cvmsgs" style="flex:1;padding:.85rem .9rem;"></div><div class="cbar"><textarea class="cin" id="cvin" placeholder="Message…" rows="1" oninput="aR(this)"></textarea><button class="sbtn" onclick="sendCV()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div></div>
+
+<!-- MODAL -->
+<div class="mov" id="modal" onclick="closeMov(event)"><div class="ms" id="modalbody"></div></div>
+
+<!-- TOAST -->
+<div class="toast" id="toastel"></div>
+
+<script>
+// ══ STORAGE ══
+function save(k,v){try{localStorage.setItem('acs_'+k,JSON.stringify(v));}catch(e){}}
+function load(k,def){try{const v=localStorage.getItem('acs_'+k);return v?JSON.parse(v):def;}catch(e){return def;}}
+
+// ══ DEFAULT DATA ══
+const DEFAULT_CLIENTS = {};
+
+// Load or init clients
+let CLIENTS = load('clients', DEFAULT_CLIENTS);
+const ADMIN = {pin:'0000',role:'admin',name:'Alexis B.',initials:'AB',plan:'Admin'};
+
+let CU=null, botStep=0; // pin déjà déclaré en haut
+
+// ══ PIN ══
+// pk, pdel, updDots déclarés en haut du document
+function tryLogin(){
+  // Toujours recharger depuis localStorage (multi-device safe)
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  const id=document.getElementById('lid').value.trim().toLowerCase();
+  let user=null;
+  if(id==='admin'&&ADMIN.pin===pin){user={...ADMIN,id:'admin'};}
+  else if(CLIENTS[id]&&CLIENTS[id].pin===pin){user={...CLIENTS[id],id};}
+  if(user){
+    for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot ok';
+    // Sauvegarder identifiant + session
+    try{
+      localStorage.setItem('acs_last_id', id);
+      sessionStorage.setItem('acs_session', id); // session active
+    }catch(e){}
+    setTimeout(()=>{
+      CU=user;
+      // Email : on vérifie si déjà renseigné OU déjà vu
+      const _emailDone = localStorage.getItem('acs_email_done_'+id);
+      const _emailVal  = localStorage.getItem('acs_email_'+id) || (CLIENTS[id]&&CLIENTS[id].email);
+      if(!_emailDone && !_emailVal && user.role !== 'admin') {
+        showEmailCapture(id, user);
+      } else {
+        // Marquer comme fait si email déjà connu
+        if(_emailVal && !_emailDone) localStorage.setItem('acs_email_done_'+id,'1');
+        initApp();
+      }
+    },380);
+  }else{
+    for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot err';
+    document.getElementById('pgrid').classList.add('shake');
+    setTimeout(()=>{pin='';updDots();document.getElementById('pgrid').classList.remove('shake');},500);
+  }
+}
+document.getElementById('lid').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lid').blur();});
+document.getElementById('lid').addEventListener('input',()=>{pin='';updDots();});
+// Touch géré nativement par les boutons
+
+// ══ APP INIT ══
+function initApp(){
+  document.getElementById('login').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+  const av=document.getElementById('topav');
+  av.textContent=CU.initials;
+  av.className=CU.role==='admin'?'av adm':'av';
+  CU.role==='admin'?buildAdmin():buildClient();
+  buildProfile();buildThreads();
+  initChat();goPage('dash');
+  if(CU.role!=='admin') initNotifications();
+  setTimeout(updateApiKeyUI, 100);
+}
+
+// ══ CLIENT ══
+function buildClient(){
+  const u=CU;
+  if(!u){ console.error('buildClient: CU is null'); return; }
+  if(!u.villas) u.villas=[];
+  if(!u.history) u.history=[];
+  const totalRev=u.villas.reduce((s,v)=>s+(v.rev||0),0);
+  const totalNet=u.villas.reduce((s,v)=>s+(v.net||0),0);
+  const totalCom=u.villas.reduce((s,v)=>s+(v.com||0),0);
+  const comPct=totalRev>0?Math.round(totalCom/totalRev*100):0;
+  let h=`<div class="h1">Bonjour, ${u.name.split(' ')[0]} 👋</div>
+  <div class="sub">Février 2026 · ${u.villas.length} villa${u.villas.length>1?'s':''}</div>
+  <div class="kr">
+    <div class="kc"><div class="kl">Revenus Fév.</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
+    <div class="kc"><div class="kl">Bénéfice net</div><div class="kv">${fmt(totalNet)}</div><div class="kd ${totalNet>0?'up':''}">${u.villas.length} villa${u.villas.length>1?'s':''}</div></div>
+  </div>
+  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div class="kl">💰 Commissions générées</div><div class="kv">${fmt(totalCom)}</div><div class="kd up">${comPct}% des revenus bruts</div></div>
+      <div style="text-align:right;">
+        <div style="font-size:.6rem;color:var(--gris);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem;">Détail par villa</div>
+        ${u.villas.map(v=>`<div style="font-size:.72rem;color:var(--gris);margin-bottom:2px;">${v.name} <span style="color:var(--or3);font-weight:600">${fmt(v.com)}</span></div>`).join('')}
+      </div>
+    </div>
+    <div style="margin-top:.6rem;height:4px;background:var(--gris2);border-radius:2px;overflow:hidden;">
+      <div style="height:100%;width:${comPct}%;background:linear-gradient(90deg,var(--or),var(--or3));border-radius:2px;"></div>
+    </div>
+  </div>
+  <div class="qb" onclick="openDeclaration()" style="border-color:rgba(201,149,12,.5);background:rgba(201,149,12,.07);"><div class="qi">📋</div><div class="qt"><strong>Déclarer ce mois</strong><small>Formulaire guidé — rapide et simple</small></div><div class="qa">›</div></div>
+  <div class="qb" onclick="goPage('chat')"><div class="qi">💬</div><div class="qt"><strong>Assistant ACS</strong><small>Chat libre avec l'assistant IA</small></div><div class="qa">›</div></div>
+  <div class="sh">Mes villas</div>`;
+  h += `<button class="add-btn" onclick="openAddVilla()" style="margin-bottom:.8rem;">＋ Ajouter une villa</button>`;
+  u.villas.forEach(v=>{
+    const rp=Math.min(100,Math.round((v.dep+v.chg)/v.rev*100));
+    const rn=Math.max(0,Math.round(v.net/v.rev*100));
+    h+=`<div class="vc ${v.pos?'pos':'neg'}" onclick="openVilla('${v.id}')">
+      <div class="vt"><div><div class="vn">${v.name}</div><div class="vp">${v.period}</div></div>
+      <div class="vnet ${v.pos?'pos':'neg'}">${v.pos?'+':''}${fmt(v.net)}</div></div>
+      <div class="chips"><div class="chip">Revenus <span>${fmt(v.rev)}</span></div><div class="chip">Charges <span>${fmt(v.dep+v.chg)}</span></div><div class="chip">Commission <span>${fmt(v.com)}</span></div></div>
+      <div class="vbars"><div><div class="bl2">Revenus</div><div class="bt2"><div class="bf r" style="width:100%"></div></div></div>
+      <div><div class="bl2">Dépenses</div><div class="bt2"><div class="bf d" style="width:${rp}%"></div></div></div>
+      <div><div class="bl2">NET</div><div class="bt2"><div class="bf n" style="width:${rn}%"></div></div></div></div></div>`;
+  });
+  document.getElementById('pg-dash').innerHTML=h;
+
+  // Historique
+  let hh='';
+  const groups={};
+  u.history.forEach(x=>{if(!groups[x.period])groups[x.period]=[];groups[x.period].push(x);});
+  Object.keys(groups).forEach(period=>{
+    hh+=`<div class="mg"><div class="ml">${period}</div>`;
+    groups[period].forEach(x=>{hh+=histItem(x);});
+    hh+=`</div>`;
+  });
+  document.getElementById('pg-hist').innerHTML=`<div class="h1">Historique</div><div class="sub">Tous vos rapports mensuels</div>${hh}`;
+}
+
+// ══ ADMIN ══
+function buildAdmin(){
+  // Recharger CLIENTS et s'assurer que chaque client a son id
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  Object.keys(CLIENTS).forEach(function(k){ if(!CLIENTS[k].id) CLIENTS[k].id = k; });
+  const clients=Object.values(CLIENTS);
+  const totalRev=clients.reduce((s,c)=>s+(c.villas?c.villas.reduce((a,v)=>a+v.rev,0):0),0);
+  const totalNet=clients.reduce((s,c)=>s+(c.villas?c.villas.reduce((a,v)=>a+v.net,0):0),0);
+  let h=`<div class="h1">Dashboard Admin 👑</div>
+  <div class="sub">Vue globale · ${clients.length} client${clients.length>1?'s':''}</div>
+  <div class="abadge">👑 Accès Administrateur</div>
+  <div class="ak3">
+    <div class="ak"><div class="akv">${clients.length}</div><div class="akl">Clients</div></div>
+    <div class="ak"><div class="akv">${clients.reduce((s,c)=>s+(c.villas?c.villas.length:0),0)}</div><div class="akl">Villas</div></div>
+    <div class="ak"><div class="akv">${fmt(totalNet).replace(' ฿','')}</div><div class="akl">Net total</div></div>
+  </div>
+  <div class="kr">
+    <div class="kc"><div class="kl">Total revenus</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">${clients.length} clients</div></div>
+    <div class="kc"><div class="kl">Net global</div><div class="kv">${fmt(totalNet)}</div><div class="kd up">Fév. 2026</div></div>
+  </div>
+  <div class="sh">Clients actifs</div>`;
+  clients.forEach(function(c){
+    const cid = c.id || Object.keys(CLIENTS).find(function(k){ return CLIENTS[k]===c; }) || '';
+    const cv=c.villas?c.villas.length:0;
+    const cr=c.villas?c.villas.reduce((s,v)=>s+(v.rev||0),0):0;
+    const cn=c.villas?c.villas.reduce((s,v)=>s+(v.net||0),0):0;
+    h+=`<div class="cc">
+      <div class="cct"><div class="ccn">${c.name}</div><span class="ccp b">ACS</span></div>
+      <div class="ccs"><div class="cst">Revenus <span>${fmt(cr)}</span></div><div class="cst">NET <span style="color:${cn>=0?'#4ade80':'#f87171'}">${cn>=0?'+':''}${fmt(cn)}</span></div><div class="cst">Villas <span>${cv}</span></div></div>
+      <div class="cca">
+        <div class="cb v" onclick="viewClient('${cid}')">👁 Voir</div>
+        <div class="cb m" onclick="openConvWith('${c.name}')">💬 Message</div>
+        <div class="cb r2" onclick="showToast('Rapport ${c.name} généré !')">📄 Rapport</div>
+        <div class="cb del" onclick="confirmDelete('${cid}')">🗑</div>
+      </div>
+    </div>`;
+  });
+  h+=`<button class="add-btn" onclick="openAddClient()">＋  Ajouter un client</button>
+  <button class="add-btn" onclick="openAddVilla('admin')" style="margin-top:.5rem;">🏠  Ajouter une villa à un client</button>`;
+  document.getElementById('pg-dash').innerHTML=h;
+
+  // Historique admin
+  let hh=`<div class="h1">Historique</div><div class="sub">Tous les clients</div><div class="abadge">👑 Vue globale</div>`;
+  clients.forEach(c=>{
+    if(!c.history||!c.history.length)return;
+    hh+=`<div class="mg"><div class="ml">${c.name}</div>`;
+    c.history.forEach(x=>{hh+=histItem(x);});
+    hh+=`</div>`;
+  });
+  document.getElementById('pg-hist').innerHTML=hh;
+}
+
+function viewClient(id){
+  const c=CLIENTS[id]; if(!c)return;
+  const prev=CU;
+  CU={...c,id};
+  buildClient();
+  CU=prev;
+  showToast(`Vue de ${c.name}`);
+}
+
+// ══ ADD CLIENT ══
+// ══ AJOUTER UNE VILLA ══
+function openAddVilla(mode){
+  // mode = 'admin' ou undefined (client)
+  let clientOptions = '';
+  if(mode==='admin'){
+    clientOptions = '<div class="form-group"><label class="form-label">Client *</label><select class="form-select" id="av-client">';
+    Object.entries(CLIENTS).forEach(([id,cl])=>{ clientOptions += `<option value="${id}">${cl.name}</option>`; });
+    clientOptions += '</select></div>';
+  }
+
+  document.getElementById('modalbody').innerHTML = `
+    <div class="mh"></div>
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.2rem;">
+      <div style="font-size:1.5rem;">🏠</div>
+      <div class="mt2" style="margin-bottom:0;">Ajouter une villa</div>
+    </div>
+    <div class="mp">3 étapes simples — moins de 2 minutes</div>
+
+    <!-- ÉTAPES -->
+    <div style="display:flex;gap:.4rem;margin-bottom:1.2rem;" id="av-steps">
+      <div id="av-step-1-ind" style="flex:1;height:3px;border-radius:2px;background:var(--or3);transition:all .3s;"></div>
+      <div id="av-step-2-ind" style="flex:1;height:3px;border-radius:2px;background:var(--gris2);transition:all .3s;"></div>
+      <div id="av-step-3-ind" style="flex:1;height:3px;border-radius:2px;background:var(--gris2);transition:all .3s;"></div>
+    </div>
+
+    <!-- ÉTAPE 1 : NOM -->
+    <div id="av-page-1">
+      <div style="font-size:.72rem;color:var(--gris);margin-bottom:1rem;">Étape 1 / 3 — Identité de la villa</div>
+      ${clientOptions}
+      <div class="form-group">
+        <label class="form-label">Nom de la villa *</label>
+        <input class="form-input" id="av-name" placeholder="Ex : Villa Sunset Koh Samui" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Taux de commission ACS *</label>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <input class="form-input" id="av-com" type="number" placeholder="Ex : 20" min="0" max="50" style="width:100px;" />
+          <span style="color:var(--gris);font-size:.9rem;">%</span>
+          <span style="font-size:.7rem;color:var(--gris);flex:1;">des revenus bruts</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Plateformes utilisées</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="av-platforms">
+          <div class="plat-chip on" onclick="togglePlat(this,'airbnb')">Airbnb</div>
+          <div class="plat-chip" onclick="togglePlat(this,'booking')">Booking.com</div>
+          <div class="plat-chip" onclick="togglePlat(this,'agoda')">Agoda</div>
+          <div class="plat-chip" onclick="togglePlat(this,'direct')">Direct</div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="avNext(1)">Suivant →</button>
+    </div>
+
+    <!-- ÉTAPE 2 : CHARGES FIXES -->
+    <div id="av-page-2" style="display:none;">
+      <div style="font-size:.72rem;color:var(--gris);margin-bottom:1rem;">Étape 2 / 3 — Charges fixes mensuelles</div>
+      <div style="font-size:.78rem;color:var(--gris);margin-bottom:.8rem;background:var(--noir3);padding:.6rem .8rem;border-radius:6px;border-left:2px solid var(--or);">
+        💡 Ces charges seront déduites automatiquement à chaque rapport
+      </div>
+      <div id="charges-list">
+        <div class="charge-row" data-key="pisciniste">
+          <span class="charge-name">🏊 Pisciniste</span>
+          <div style="display:flex;align-items:center;gap:.3rem;flex:1;">
+            <input class="form-input charge-input" type="number" placeholder="Montant" style="flex:1;"/>
+            <span style="color:var(--or3);font-size:.8rem;font-weight:600;">฿</span>
+          </div>
+        </div>
+        <div class="charge-row" data-key="jardinier">
+          <span class="charge-name">🌿 Jardinier</span>
+          <div style="display:flex;align-items:center;gap:.3rem;flex:1;">
+            <input class="form-input charge-input" type="number" placeholder="Montant" style="flex:1;"/>
+            <span style="color:var(--or3);font-size:.8rem;font-weight:600;">฿</span>
+          </div>
+        </div>
+        <div class="charge-row" data-key="internet">
+          <span class="charge-name">🌐 Internet <span style="font-size:.65rem;color:var(--gris);">(optionnel)</span></span>
+          <div style="display:flex;align-items:center;gap:.3rem;flex:1;">
+            <input class="form-input charge-input" type="number" placeholder="Montant" style="flex:1;"/>
+            <span style="color:var(--or3);font-size:.8rem;font-weight:600;">฿</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.15);border-radius:6px;padding:.55rem .7rem;font-size:.7rem;color:var(--gris);margin-bottom:.5rem;line-height:1.5;">
+        ℹ️ Électricité, eau, ménage et autres charges variables seront déclarées chaque mois dans l'assistant.
+      </div>
+      <div id="extra-charges"></div>
+      <button class="add-btn" onclick="addExtraCharge()" style="margin:.6rem 0;">＋ Autre charge</button>
+      <div style="display:flex;gap:.6rem;margin-top:.5rem;">
+        <button class="cancel-btn" style="flex:1;" onclick="avBack(2)">← Retour</button>
+        <button class="save-btn" style="flex:2;" onclick="avNext(2)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3 : INFOS COMPLÉMENTAIRES -->
+    <div id="av-page-3" style="display:none;">
+      <div style="font-size:.72rem;color:var(--gris);margin-bottom:1rem;">Étape 3 / 3 — Informations optionnelles</div>
+      <div class="form-group">
+        <label class="form-label">Nombre de chambres</label>
+        <div style="display:flex;gap:.5rem;">
+          ${[1,2,3,4,5,6].map(n=>`<div class="nbr-chip" onclick="selectNbr(this,${n},'av-chambres')">${n}</div>`).join('')}
+        </div>
+        <input type="hidden" id="av-chambres" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacité max (personnes)</label>
+        <input class="form-input" id="av-capa" type="number" placeholder="Ex : 8" min="1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note / remarque</label>
+        <textarea class="form-input" id="av-note" placeholder="Ex : piscine privée, vue mer, animaux acceptés…" rows="2" style="resize:none;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Propriétaire (nom pour les rapports)</label>
+        <input class="form-input" id="av-owner" placeholder="Ex : M. Dupont" />
+      </div>
+      <div style="display:flex;gap:.6rem;margin-top:.5rem;">
+        <button class="cancel-btn" style="flex:1;" onclick="avBack(3)">← Retour</button>
+        <button class="save-btn" style="flex:2;" onclick="avSave('${mode||'client'}')">✓ Créer la villa</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal').classList.add('open');
+  avMode = mode||'client';
+}
+
+// Styles chips injectés via CSS
+
+let avMode = 'client';
+function togglePlat(el,k){el.classList.toggle('on');}
+function selectNbr(el,n,id){document.querySelectorAll('.nbr-chip').forEach(x=>x.classList.remove('on'));el.classList.add('on');document.getElementById(id).value=n;}
+function addExtraCharge(){
+  const div=document.createElement('div');div.className='charge-row';
+  div.innerHTML='<input class="form-input" placeholder="Nom charge" style="flex:1.5;"/><input class="form-input charge-input" type="number" placeholder="0 ฿" style="flex:1;"/><button onclick="this.parentNode.remove()" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:6px;padding:.4rem .6rem;cursor:pointer;">✕</button>';
+  document.getElementById('extra-charges').appendChild(div);
+}
+function avNext(step){
+  if(step===1){
+    const name=document.getElementById('av-name').value.trim();
+    const com=document.getElementById('av-com').value;
+    if(!name){showToast('⚠️ Donnez un nom à la villa');return;}
+    if(!com||com<1||com>50){showToast('⚠️ Commission entre 1 et 50%');return;}
+    document.getElementById('av-page-1').style.display='none';
+    document.getElementById('av-page-2').style.display='block';
+    document.getElementById('av-step-2-ind').style.background='var(--or3)';
+  } else if(step===2){
+    document.getElementById('av-page-2').style.display='none';
+    document.getElementById('av-page-3').style.display='block';
+    document.getElementById('av-step-3-ind').style.background='var(--or3)';
+  }
+}
+function avBack(step){
+  if(step===2){
+    document.getElementById('av-page-2').style.display='none';
+    document.getElementById('av-page-1').style.display='block';
+    document.getElementById('av-step-2-ind').style.background='var(--gris2)';
+  } else if(step===3){
+    document.getElementById('av-page-3').style.display='none';
+    document.getElementById('av-page-2').style.display='block';
+    document.getElementById('av-step-3-ind').style.background='var(--gris2)';
+  }
+}
+function avSave(mode){
+  const name=document.getElementById('av-name').value.trim();
+  const comPct=parseInt(document.getElementById('av-com').value)||0;
+  const chambres=document.getElementById('av-chambres').value;
+  const capa=document.getElementById('av-capa').value;
+  const note=document.getElementById('av-note').value.trim();
+  const owner=document.getElementById('av-owner').value.trim();
+
+  // Plateformes
+  const plats=[...document.querySelectorAll('.plat-chip.on')].map(x=>x.textContent);
+
+  // Charges fixes
+  const charges={};
+  document.querySelectorAll('#charges-list .charge-row').forEach(row=>{
+    const key=row.dataset.key;
+    const val=parseInt(row.querySelector('.charge-input').value)||0;
+    if(val>0) charges[key]=val;
+  });
+  // Charges extra
+  document.querySelectorAll('#extra-charges .charge-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const key=inputs[0].value.trim();
+    const val=parseInt(inputs[1].value)||0;
+    if(key&&val>0) charges[key]=val;
+  });
+  const totalCharges=Object.values(charges).reduce((s,v)=>s+v,0);
+
+  // Construire la villa
+  const vid=(name.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now());
+  const sections=[
+    {t:'Revenus',items:[['En attente de données','0 ฿']],total:'0 ฿'},
+  ];
+  if(totalCharges>0){
+    sections.push({t:'Charges fixes mensuelles',items:Object.entries(charges).map(([k,v])=>[k.charAt(0).toUpperCase()+k.slice(1),fmt(v)]),total:fmt(totalCharges)});
+  }
+  sections.push({t:'Commission',items:[['Taux : '+comPct+'%','Calculé sur revenus bruts']],total:comPct+'%'});
+
+  const villa={
+    id:vid, name, period:'', pos:true, net:0, rev:0,
+    dep:0, chg:totalCharges, com:0, comPct,
+    charges, plats, chambres, capa, note, owner,
+    sections
+  };
+
+  // Déterminer le client cible
+  let targetId;
+  if(mode==='admin'){
+    targetId=document.getElementById('av-client').value;
+  } else {
+    targetId=CU.id;
+  }
+
+  if(!CLIENTS[targetId]){showToast('⚠️ Client introuvable');return;}
+  if(!CLIENTS[targetId].villas) CLIENTS[targetId].villas=[];
+  CLIENTS[targetId].villas.push(villa);
+  save('clients',CLIENTS);
+
+  // Recharger l'interface
+  if(CU.role==='admin'){
+    if(targetId===CU.id) CU=CLIENTS[targetId];
+    buildAdmin();
+  } else {
+    CU={...CLIENTS[targetId],id:targetId};
+    buildClient();
+  }
+  closeMov();
+  showToast('✅ Villa "'+name+'" ajoutée avec succès !');
+}
+
+function openAddClient(){
+  const pins=[];
+  document.getElementById('modalbody').innerHTML=`
+    <div class="mh"></div>
+    <div class="mt2">Nouveau client</div>
+    <div class="mp">Remplissez les informations du client</div>
+    <div class="form-group"><label class="form-label">Nom complet *</label><input class="form-input" id="fc-name" placeholder="Ex : Villa Sunset" /></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Identifiant *</label><input class="form-input" id="fc-id" placeholder="villa.sunset" autocapitalize="off"/></div>
+      <div class="form-group"><label class="form-label">Initiales *</label><input class="form-input" id="fc-init" placeholder="VS" maxlength="2" style="text-transform:uppercase"/></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Code PIN * (4 chiffres)</label>
+      <div class="pin-display" id="fc-pin-display">
+        <div class="pin-circle" id="fpc0">·</div><div class="pin-circle" id="fpc1">·</div><div class="pin-circle" id="fpc2">·</div><div class="pin-circle" id="fpc3">·</div>
+      </div>
+      <div style="display:flex;gap:.4rem;max-width:220px;margin:0 auto;">
+        ${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button onclick="addPinDigit(${n},'fc-pin')" style="flex:1;padding:.5rem 0;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);border-radius:6px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:1.1rem;">${n}</button>`).join('')}
+        <button onclick="delPinDigit('fc-pin')" style="flex:1;padding:.5rem 0;background:var(--noir3);border:1px solid var(--gris2);color:var(--gris);border-radius:6px;cursor:pointer;font-size:.8rem;">⌫</button>
+      </div>
+      <input type="hidden" id="fc-pin" value="">
+    </div>
+    <input type="hidden" id="fc-plan" value="ACS">
+    <div class="form-group"><label class="form-label">Nom de villa principale *</label><input class="form-input" id="fc-villa" placeholder="Ex : Villa Sunset Koh Samui"/></div>
+    <button class="save-btn" onclick="saveNewClient()">✓  Créer le client</button>
+    <button class="cancel-btn" onclick="closeMov()">Annuler</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+let fcpin='';
+function addPinDigit(n,id){
+  if(fcpin.length>=4)return;
+  fcpin+=String(n);
+  document.getElementById(id).value=fcpin;
+  updateFcPin();
+}
+function delPinDigit(id){
+  fcpin=fcpin.slice(0,-1);
+  document.getElementById(id).value=fcpin;
+  updateFcPin();
+}
+function updateFcPin(){
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('fpc'+i);
+    if(el) el.textContent=i<fcpin.length?fcpin[i]:'·';
+  }
+}
+
+function saveNewClient(){
+  // Toujours recharger depuis localStorage pour avoir les dernières données
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  const name=document.getElementById('fc-name').value.trim();
+  let id=document.getElementById('fc-id').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g,'').replace(/\s+/g,'.');
+  const init=(document.getElementById('fc-init')?document.getElementById('fc-init').value.trim().toUpperCase().slice(0,2):name.slice(0,2).toUpperCase());
+  // PIN : utiliser fcpin OU la valeur du champ caché
+  const pinVal = fcpin.length===4 ? fcpin : (document.getElementById('fc-pin')?document.getElementById('fc-pin').value:'');
+  const plan='ACS';
+  const villa=(document.getElementById('fc-villa')?document.getElementById('fc-villa').value.trim():'');
+
+  if(!name){showToast('⚠️ Entrez le nom du client');return;}
+  if(!id){showToast('⚠️ Entrez un identifiant (ex: jean.dupont)');return;}
+  if(pinVal.length!==4){showToast('⚠️ PIN : entrez exactement 4 chiffres');return;}
+  if(CLIENTS[id]||id==='admin'){showToast('⚠️ Identifiant "'+id+'" déjà utilisé — choisissez-en un autre');return;}
+
+  const initials2 = init || name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2) || 'CL';
+  const villas2 = villa ? [{id:id+'_v1',name:villa,comPct:20,charges:{},plats:['Airbnb'],period:'',pos:true,net:0,rev:0,dep:0,chg:0,com:0,history:[]}] : [];
+  const newClient={
+    pin:String(pinVal), role:'client', name:name, initials:initials2,
+    plan:'ACS', planLabel:'Formule ACS', id:id,
+    villas: villas2,
+    history:[],
+    email:''
+  };
+
+  newClient.id = id; // Stocker l'id dans l'objet pour référence rapide
+  CLIENTS[id]=newClient;
+  save('clients',CLIENTS);
+  fcpin='';
+  // Réinitialiser les dots PIN du formulaire
+  for(let i=0;i<4;i++){ const el=document.getElementById('fc-d'+i); if(el) el.className='dot'; }
+  const pinDisplay = document.getElementById('fc-pin'); if(pinDisplay) pinDisplay.value='';
+  closeMov();
+  buildAdmin();
+  showToast('✅ Client '+name+' créé ! Identifiant : '+id+' · PIN : '+pinVal);
+}
+
+// ══ DELETE CLIENT ══
+function confirmDelete(id){
+  const c=CLIENTS[id]; if(!c)return;
+  document.getElementById('modalbody').innerHTML=`
+    <div class="mh"></div>
+    <div style="text-align:center;padding:1rem 0;">
+      <div style="font-size:2.5rem;margin-bottom:.8rem;">🗑</div>
+      <div class="confirm-title">Supprimer ce client ?</div>
+      <div class="confirm-sub">Vous êtes sur le point de supprimer <strong>${c.name}</strong>.<br>Cette action est irréversible.</div>
+      <div class="confirm-btns">
+        <button class="cb2 no" onclick="closeMov()">Annuler</button>
+        <button class="cb2 yes" onclick="doDelete('${id}')">Supprimer</button>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+function doDelete(id){
+  const name=CLIENTS[id]?CLIENTS[id].name:'';
+  delete CLIENTS[id];
+  save('clients',CLIENTS);
+  closeMov();
+  buildAdmin();
+  showToast(`🗑 ${name} supprimé`);
+}
+
+// ══ VILLA MODAL ══
+// Index global de toutes les villas pour accès rapide
+function getAllVillas(){
+  const all={};
+  Object.values(CLIENTS).forEach(c=>{if(c.villas)c.villas.forEach(v=>{all[v.id]=v;});});
+  if(CU&&CU.villas)CU.villas.forEach(v=>{all[v.id]=v;});
+  return all;
+}
+function openVilla(id){
+  window._currentVillaId = id; // Stocker pour les boutons
+  var v = CU.villas ? CU.villas.find(function(x){ return x.id===id; }) : null;
+  if(!v) return;
+
+  var parts = [];
+  parts.push('<div class="mh"></div>');
+  parts.push('<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">');
+  parts.push('<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);font-weight:700;">🏠 ' + v.name + '</div>');
+  parts.push('<span style="font-size:.72rem;color:var(--gris);">Commission ' + (v.comPct||20) + '%</span>');
+  parts.push('</div>');
+
+  // Plateformes
+  if(v.plats && v.plats.length>0){
+    parts.push('<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;">');
+    v.plats.forEach(function(p){
+      parts.push('<span style="background:var(--noir3);border:1px solid var(--gris2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--or3);">' + p + '</span>');
+    });
+    parts.push('</div>');
+  }
+  if(v.chambres) parts.push('<div style="font-size:.75rem;color:var(--gris);margin-bottom:.25rem;">🛏 ' + v.chambres + ' chambre' + (v.chambres>1?'s':'') + '</div>');
+  if(v.owner)    parts.push('<div style="font-size:.75rem;color:var(--gris);margin-bottom:.6rem;">👤 ' + v.owner + '</div>');
+
+  // Charges fixes
+  if(v.charges && Object.keys(v.charges).length>0){
+    parts.push('<div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.15);border-radius:8px;padding:.7rem .8rem;margin-bottom:.8rem;">');
+    parts.push('<div style="font-size:.62rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Charges fixes mensuelles</div>');
+    Object.entries(v.charges).forEach(function(e){
+      parts.push('<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.04);">');
+      parts.push('<span style="color:var(--gris);">' + e[0].charAt(0).toUpperCase()+e[0].slice(1) + '</span>');
+      parts.push('<span style="color:var(--blanc);font-weight:600;">' + Number(e[1]).toLocaleString('fr-FR') + ' ฿</span>');
+      parts.push('</div>');
+    });
+    parts.push('</div>');
+  }
+
+  // Boutons
+  parts.push('<div style="display:flex;gap:.6rem;margin-top:.6rem;">');
+  parts.push('<button class="cancel-btn" style="flex:1;background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.3);color:#f87171;" onclick="window._villaToDelete=window._currentVillaId;confirmDeleteVilla()">🗑 Supprimer</button>');
+  parts.push('<button class="cancel-btn" style="flex:1;" onclick="closeMov()">Fermer</button>');
+  parts.push('</div>');
+
+  document.getElementById('modalbody').innerHTML = parts.join('');
+  document.getElementById('modal').classList.add('open');
+}
+
+function confirmDeleteVilla(id_unused){
+  var id = window._villaToDelete || window._currentVillaId;
+  var v = CU.villas ? CU.villas.find(function(x){ return x.id===id; }) : null;
+  if(!v) return;
+  var vname = v.name;
+  var html = '<div class="mh"></div><div style="text-align:center;padding:1rem 0;">';
+  html += '<div style="font-size:2.5rem;margin-bottom:.8rem;">🗑</div>';
+  html += '<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:#f87171;margin-bottom:.5rem;">Supprimer ' + vname + ' ?</div>';
+  html += '<div style="font-size:.78rem;color:var(--gris);margin-bottom:1.5rem;line-height:1.6;">Cette action est irréversible.<br>Les rapports existants seront conservés.</div>';
+    html += '<button class="save-btn" style="background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.4);color:#f87171;margin-bottom:.5rem;" onclick="deleteVilla(null, window._villaToDelete)">Oui, supprimer</button>';
+    html += '<button class="cancel-btn" onclick="openVilla(window._currentVillaId)">Annuler</button>';
+  html += '</div>';
+  document.getElementById('modalbody').innerHTML = html;
+}
+
+function deleteVilla(btn, id){
+  if(!id) id = window._villaToDelete || window._currentVillaId;
+  if(!CU.villas) return;
+  CU.villas = CU.villas.filter(function(v){ return v.id !== id; });
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(cid && CLIENTS[cid]){
+    CLIENTS[cid].villas = CU.villas;
+    save('clients', CLIENTS);
+  }
+  closeMov();
+  buildClient();
+  showToast('✅ Villa supprimée');
+}
+
+// ══ THREADS ══
+function buildThreads(){
+  if(CU.role==='admin'){
+    let h='';
+    Object.entries(CLIENTS).forEach(([id,c])=>{
+      const col='linear-gradient(135deg,#C9950C,#F5D06B)';
+      h+=`<div class="th" onclick="openConvWith('${c.name}')"><div class="tav" style="background:${col}">${c.initials}</div><div class="ti"><div class="tn">${c.name}</div><div class="tp">Appuyez pour envoyer un message</div></div><div class="tm"><div class="tt">—</div></div></div>`;
+    });
+    document.getElementById('threads').innerHTML=h||'<div style="text-align:center;color:var(--gris);padding:2rem;">Aucun client</div>';
+  }else{
+    document.getElementById('threads').innerHTML=`
+      <div class="th" onclick="openConvWith('ACS Assistant')"><div class="tav" style="background:linear-gradient(135deg,#C9950C,#F5D06B)">A<div class="tod"></div></div><div class="ti"><div class="tn">ACS — Assistant</div><div class="tp">✅ Rapport généré avec succès</div></div><div class="tm"><div class="tt">09:14</div><span class="tbadge">1</span></div></div>
+      <div class="th" onclick="openConvWith('Alexis — Gestionnaire')"><div class="tav" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">AL</div><div class="ti"><div class="tn">Alexis — Gestionnaire</div><div class="tp">Vos données ont bien été reçues</div></div><div class="tm"><div class="tt">Hier</div></div></div>`;
+  }
+}
+
+// ══ PROFIL ══
+function getAiSection(isAdmin){
+  if(isAdmin){
+    return '<div class="sh" style="margin-top:.8rem">Assistant IA — Configuration</div>'
+      +'<div class="mi" onclick="openApiKeyModal()" style="cursor:pointer"><div class="mii">🤖</div><div class="mit"><div class="miT">Clé API Anthropic</div><div id="api-key-status" class="miD">Non configurée</div></div><div style="color:var(--or3);font-size:.8rem;" id="api-key-badge">Configurer</div></div>';
+  }
+  return '<div class="sh" style="margin-top:.8rem">Assistant IA</div>'
+    +'<div class="mi"><div class="mii">🤖</div><div class="mit"><div class="miT">Assistant ACS — Claude</div><div class="miD" id="client-ai-status">Chargement...</div></div></div>';
+}
+
+function buildProfile(){
+  const u=CU;
+  const isAdmin=u.role==='admin';
+  document.getElementById('pg-profil').innerHTML=`
+    <div class="ph">
+      <div class="pav" style="background:${isAdmin?'linear-gradient(135deg,#7c3aed,#a855f7)':'linear-gradient(135deg,var(--or),var(--or3))'}">${u.initials}</div>
+      <div class="pn">${u.name}</div>
+      <div class="pr">${isAdmin?'Administrateur ACS':'Client ACS · '+(u.villas?u.villas.length:0)+' villa'+(u.villas&&u.villas.length>1?'s':'')}</div>
+      <div class="pp" style="${isAdmin?'background:rgba(124,58,237,.1);border-color:rgba(168,85,247,.3);color:#c084fc;':''}">${isAdmin?'👑 Admin':'⭐ Client ACS'}</div>
+    </div>
+    <div class="sh">Mon compte</div>
+    <div class="mi" onclick="goPage('dash')" style="cursor:pointer"><div class="mii">🏠</div><div class="mit"><div class="miT">Mes villas</div><div class="miD">Voir toutes mes villas</div></div><div style="color:var(--or3)">›</div></div>
+    <div class="mi" onclick="goPage('hist')" style="cursor:pointer"><div class="mii">📄</div><div class="mit"><div class="miT">Mes rapports</div><div class="miD">Télécharger vos rapports PDF</div></div><div style="color:var(--or3)">›</div></div>
+    <div class="mi"><div class="mii">💳</div><div class="mit"><div class="miT">Abonnement</div><div class="miD">${isAdmin?'Gérer les clients':'Formule ACS'}</div></div><div style="color:var(--gris)">›</div></div>
+    \${getAiSection(isAdmin)}
+    <div class="sh" style="margin-top:.8rem">Notifications</div>
+    <div class="mi" onclick="testNotif()"><div class="mii">🔔</div><div class="mit"><div class="miT">Rappel quotidien 19h</div><div class="miD">Appuyez pour activer / tester</div></div><div style="color:var(--or3);font-size:.8rem;">Activer</div></div>
+    <div class="sh" style="margin-top:.8rem">Support</div>
+    <div class="mi" onclick="window.open('https://wa.me/66913339323','_blank')"><div class="mii" style="background:transparent;padding:0;overflow:visible;"><svg viewBox="0 0 32 32" width="34" height="34"><circle cx="16" cy="16" r="16" fill="#25D366"/><path fill="#fff" d="M23.5 8.5A10.45 10.45 0 0 0 16 5.5C10.2 5.5 5.5 10.2 5.5 16c0 1.85.48 3.65 1.4 5.25L5.5 26.5l5.4-1.4a10.44 10.44 0 0 0 5.1 1.3c5.8 0 10.5-4.7 10.5-10.5 0-2.8-1.1-5.44-3-7.4zm-7.5 16.1a8.67 8.67 0 0 1-4.43-1.2l-.32-.19-3.2.84.85-3.12-.2-.32A8.67 8.67 0 0 1 7.33 16c0-4.8 3.9-8.67 8.67-8.67 2.32 0 4.5.9 6.13 2.54A8.6 8.6 0 0 1 24.67 16c0 4.77-3.9 8.6-8.67 8.6zm4.76-6.48c-.26-.13-1.54-.76-1.78-.85-.24-.08-.41-.13-.58.13-.17.26-.65.85-.8 1.02-.15.17-.3.2-.55.07-.26-.14-1.08-.4-2.05-1.27-.76-.68-1.27-1.51-1.42-1.77-.15-.26-.02-.4.11-.53.12-.12.26-.3.4-.46.13-.16.17-.26.26-.43.08-.17.04-.32-.02-.45-.07-.13-.58-1.4-.8-1.92-.2-.5-.42-.43-.58-.44h-.5c-.17 0-.44.06-.67.32-.23.26-.88.86-.88 2.1s.9 2.43 1.03 2.6c.13.17 1.78 2.72 4.32 3.81.6.26 1.07.42 1.44.54.6.19 1.16.16 1.59.1.49-.07 1.5-.61 1.71-1.2.21-.59.21-1.1.15-1.2-.07-.1-.24-.16-.5-.28z"/></svg></div><div class="mit"><div class="miT">WhatsApp ACS</div><div class="miD">+66 91 333 9323 · Appuyez pour ouvrir</div></div><div style="color:var(--gris)">›</div></div>
+    <div class="mi" onclick="location.href='mailto:acsconcierge.pro@gmail.com?subject=Demande client ACS&body=Bonjour,'" style="cursor:pointer"><div class="mii">✉️</div><div class="mit"><div class="miT">Email</div><div class="miD">acsconcierge.pro@gmail.com · Appuyez pour écrire</div></div><div style="color:var(--or3)">›</div></div>
+    <button class="lob" onclick="doLogout()">Se déconnecter</button>
+    <div style="height:1rem"></div>`;
+}
+
+// ══ CHAT ══
+// ══ CHAT INTELLIGENT ══
+let chatHistory=[];
+
+function saveChatHistory(){
+  if(!CU||CU.role==='admin') return;
+  const msgs=document.getElementById('chatmsgs');
+  const items=[];
+  msgs.querySelectorAll('.msg').forEach(m=>{
+    items.push({cls:m.className, html:m.querySelector('.bb').innerHTML, ts:m.querySelector('.mt').textContent});
+  });
+  const data={ts:Date.now(), items};
+  try{ localStorage.setItem('acs_chat_'+CU.id, JSON.stringify(data)); }catch(e){}
+}
+
+function loadChatHistory(){
+  if(!CU||CU.role==='admin') return false;
+  try{
+    const raw=localStorage.getItem('acs_chat_'+CU.id);
+    if(!raw) return false;
+    const data=JSON.parse(raw);
+    // Expirer après 24h
+    if(Date.now()-data.ts > 24*60*60*1000){
+      localStorage.removeItem('acs_chat_'+CU.id);
+      return false;
+    }
+    const msgs=document.getElementById('chatmsgs');
+    msgs.innerHTML='';
+    data.items.forEach(item=>{
+      const d=document.createElement('div');
+      d.className=item.cls;
+      d.innerHTML='<div class="bb">'+item.html+'</div><div class="mt">'+item.ts+'</div>';
+      msgs.appendChild(d);
+    });
+    msgs.scrollTop=msgs.scrollHeight;
+    return true;
+  }catch(e){ return false; }
+}
+
+function initChat(){
+  const msgs=document.getElementById('chatmsgs');msgs.innerHTML='';
+  chatHistory=[];
+  // Essayer de charger l'historique des dernières 24h
+  if(loadChatHistory()) return;
+  const prenom=CU?CU.name.split(' ')[0]:'';
+  addBot('Bonjour '+prenom+' 👋 Je suis votre assistant ACS.<br>Envoyez-moi les chiffres de vos villas et je génère vos rapports automatiquement.');
+  addBot('💡 <em>Format :<br>Nom villa, mois : Airbnb X séjours X ฿, électricité X ฿, eau X ฿, ménage X ฿, commission X%</em>');
+}
+function addBot(html){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg bot';d.innerHTML='<div class="bb">'+html+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function addUser(t){const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML='<div class="bb">'+t.replace(/\n/g,'<br>')+'</div><div class="mt">'+now()+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function norm(s){
+  // Normalise: accents, majuscules, espaces multiples
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s%]/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
+function analyzeMsg(txt){
+  var t=norm(txt);
+  var hasNum=/\d/.test(txt);
+  // Revenus — très flexible
+  var hasAirbnb=/airbnb|air bnb|booking|agoda|sejour|location|loyer|revenu|rent/i.test(t);
+  // Commission — flexible
+  var hasCom=/commission|com|%|pourcent|taux/.test(t);
+  // Ajout villa
+  var hasAjout=(/ajouter|nouvel|creer|nouveau|add/.test(t))&&(/villa|propriete|maison|appart/.test(t));
+  // Correction
+  var hasCorrect=/corrig|modif|erreur|rectif|changer|faux|mauvais/.test(t);
+  // Bilan
+  var hasBilan=/bilan|annuel|annee|2024|2025|2026|recap/.test(t);
+  // Salutations
+  var hasBonjour=/bonjour|salut|hello|bonsoir|coucou|hi/.test(t);
+  var hasMerci=/merci|thank|super|parfait|nickel|cool/.test(t);
+  var hasAide=/aide|comment|utiliser|help|\?/.test(t);
+  // Mois — très flexible y compris abréviations et fautes
+  var hasMois=/janv?|fevr?|fev|mars|avr?|mai|juin|juil?|aout|aou|sept?|oct|nov|dec|mois/i.test(t);
+  if(hasBonjour) return 'salut';
+  if(hasMerci) return 'merci';
+  if(hasAide&&!hasNum) return 'aide';
+  if(hasAjout) return 'ajout';
+  if(hasCorrect) return 'correction';
+  if(hasBilan) return 'bilan';
+  if(hasAirbnb&&hasNum&&hasCom) return 'rapport_ok';
+  if(hasAirbnb&&hasNum) return 'rapport_incomplet';
+  if(hasNum&&hasMois) return 'rapport_incomplet';
+  return 'inconnu';
+}
+function parseData(txt){
+  var t = txt;
+  // Extraire nom villa (avant la virgule ou les deux-points)
+  var villaM = t.match(/^([^,:\n]+)[,:]/) || t.match(/villa\s+([^,:\s]+)/i);
+  var villa = villaM ? villaM[1].trim() : 'Villa';
+  // Mois — très flexible, abréviations, fautes
+  var moisRx = /jan(?:vier)?|fev(?:rier)?|f[ée]v|mars?|avr(?:il)?|mai|juin|juil(?:let)?|ao[uû]t?|sep(?:t(?:embre)?)?|oct(?:obre)?|nov(?:embre)?|d[eé]c(?:embre)?/i;
+  var moisM = t.match(moisRx);
+  var mois = moisM ? moisM[0] : 'ce mois';
+  // Année optionnelle
+  var anneeM = t.match(/20\d\d/); if(anneeM) mois += ' '+anneeM[0];
+  // Revenus — ignorer le nb de séjours, prendre le GROS montant après la plateforme
+  var rev=0;
+  // Pattern: plateforme [X séjours/nuits] MONTANT
+  // On cherche le plus grand nombre après la plateforme (le montant, pas le nb de séjours)
+  var revRx=/(?:airbnb|air\s*bnb|booking|agoda|direct|location|loyer|revenu|rent|recette)((?:[^\d]|\d{1,2}(?:\s*s[eé]jours?|\s*nuits?))*)(\d[\d\s.,]*)/gi;
+  var rm; while((rm=revRx.exec(t))!==null){
+    var val=parseInt(rm[3].replace(/[\s.,]/g,''));
+    if(val>=1000) rev+=val; // seulement les vrais montants (>=1000 ฿)
+  }
+  // Fallback: chercher tous les nombres >= 1000 qui ne sont pas des dépenses
+  if(rev===0){
+    var allNums=t.match(/\d[\d\s]{3,}/g)||[];
+    allNums.forEach(function(n){ var v=parseInt(n.replace(/\s/g,'')); if(v>=10000) rev=Math.max(rev,v); });
+  }
+  // Dépenses — très flexible
+  var deps=[];
+  var depRx=/(pisci?ni?ste?|piscine|pool|jardini?er?|jardinage|elec(?:tricit[eé])?|electricit[eé]|eau|water|m[eé]nage?|nettoyage|cleaning|entretien|maintenance|r[eé]paration|repare?|internet|wifi|assurance|taxe?|charge|divers)[^\d฿]*(\d[\d\s.]*)/gi;
+  var dm; while((dm=depRx.exec(t))!==null){
+    var val=parseInt(dm[2].replace(/[\s.]/g,''));
+    if(val>0) deps.push({n:dm[1].charAt(0).toUpperCase()+dm[1].slice(1),v:val});
+  }
+  var totalDep=deps.reduce(function(s,d){return s+d.v;},0);
+  // Commission — très flexible: com, commission, %, taux
+  var cpM=t.match(/(?:commission|com(?:ission)?|taux)[^\d]*(\d+)\s*%/i)||t.match(/(\d+)\s*%/);
+  var cp=cpM?parseInt(cpM[1]):0;
+  var com=rev>0&&cp>0?Math.round(rev*cp/100):0;
+  var net=rev-totalDep-com;
+  return {villa:villa,mois:mois,rev:rev,deps:deps,totalDep:totalDep,cp:cp,com:com,net:net};
+}
+function buildCard(r){
+  if(!r) return '';
+  if(!r.deps) r.deps=[];
+  if(!r.net) r.net = (r.rev||0)-(r.totalDep||0)-(r.com||0);
+  var nc=r.net>=0?'#4ade80':'#f87171';
+  var ns=(r.net>=0?'+':'')+fmt(r.net);
+  var rows='';
+  if(r.rev>0) rows+='<div class="rr"><span>Revenus totaux</span><span>'+fmt(r.rev)+'</span></div>';
+  r.deps.forEach(function(d){rows+='<div class="rr"><span>'+d.n.charAt(0).toUpperCase()+d.n.slice(1)+'</span><span class="rn">−'+fmt(d.v)+'</span></div>';});
+  if(r.com>0) rows+='<div class="rr"><span>Commission '+r.cp+'%</span><span class="rn">−'+fmt(r.com)+'</span></div>';
+  rows+='<div class="rr"><span>'+(r.net>=0?'BÉNÉFICE NET':'DÉFICIT NET')+'</span><span style="color:'+nc+'">'+ns+'</span></div>';
+  var rid='rpt_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  window._rapports = window._rapports||{};
+  window._rapports[rid] = r;
+  return '<div class="rc"><div class="rct">📊 '+r.villa+' · '+r.mois+'</div>'+rows+'<div class="rb"><button class="rbtn g" id="'+rid+'_btn" onclick="genPDF(this,\''+rid+'\')" style="width:100%;border-radius:6px;">📄 Télécharger PDF</button></div></div>';
+}
+function getReply(txt){
+  var type=analyzeMsg(txt);
+  if(type==='salut') return {d:500,m:'Bonjour ! 👋 Envoyez-moi les chiffres de vos villas et je génère vos rapports. Besoin d\'aide ? Tapez <em>"aide"</em>.'};
+  if(type==='merci') return {d:400,m:'Avec plaisir ! 🙏 N\'hésitez pas si vous avez d\'autres villas à traiter.'};
+  if(type==='aide') return {d:600,m:'Voici comment je fonctionne :<br><br>📨 <strong>Rapport mensuel</strong><br><em>Nom villa, mois : Airbnb X séjours X ฿, électricité X ฿, eau X ฿, ménage X ฿, commission X%</em><br><br>⚡ <strong>Dépenses imprévues</strong> → bouton Divers ci-dessous<br>✏️ <strong>Corriger</strong> → renvoyez les données corrigées'};
+  if(type==='ajout'){return {d:500,m:'Pour ajouter une villa, rendez-vous sur le <strong>Dashboard</strong> et appuyez sur <strong>＋ Ajouter une villa</strong> 🏠'};};
+  if(type==='correction') return {d:500,m:'✏️ Pas de problème ! Renvoyez-moi les données complètes et corrigées, je régénère le rapport immédiatement.'};
+  if(type==='bilan'){var y=(txt.match(/20\d\d/)||['2025'])[0];return {d:800,m:'📅 Pour votre <strong>bilan annuel '+y+'</strong>, contactez ACS :<br><br>📱 +66 91 333 9323<br>✉️ acsconcierge.pro@gmail.com<br><br>Demandez votre bilan annuel directement à votre gestionnaire ACS.'};};
+  if(type==='rapport_ok'){
+    var r=parseData(txt);
+    if(r.rev>0){
+      addToHistory(r);
+      return {d:1400,m:'Rapport généré 🎉'+buildCard(r), rapport:r};
+    }
+    return {d:800,m:'Données reçues mais montants illisibles.<br><em>Format : Villa X, mars : Airbnb 5 séjours 150000 ฿, eau 1500 ฿, commission 20%</em>'};
+  };
+  if(type==='rapport_incomplet'){
+    var r=parseData(txt);
+    if(r.rev>0&&r.cp===0) return {d:700,m:'Données de <strong>'+r.villa+'</strong> reçues ✅<br><br>Il manque le <strong>taux de commission</strong> (ex: 20%). Renvoyez avec cette info !'};
+    if(r.rev>0&&r.cp>0){ addToHistory(r); return {d:1200,m:'Rapport généré 🎉'+buildCard(r),rapport:r}; }
+    return {d:700,m:'Données de <strong>'+r.villa+'</strong> reçues 📋<br><br>Il me manque les <strong>revenus</strong> (ex: Airbnb 5 séjours 150 000 ฿) et/ou le <strong>taux de commission</strong>.<br>Renvoyez le message complet !'};
+  };
+  return {d:700,m:'Je n\'ai pas bien compris 🤔<br><br>Essayez :<br><em>Villa Nom, mois : Airbnb X séjours X ฿, pisciniste X ฿, eau X ฿, commission X%</em>'};
+}
+function sendM(){
+  var inp=document.getElementById('cin');
+  var t=inp.value.trim();
+  if(!t) return;
+  addUser(t); inp.value=''; inp.style.height='auto';
+  var ty=document.createElement('div');
+  ty.className='msg bot';
+  ty.innerHTML='<div class="bb"><span class="tdots"><span>.</span><span>.</span><span>.</span></span></div>';
+  document.getElementById('chatmsgs').appendChild(ty);
+  document.getElementById('chatmsgs').scrollTop=99999;
+
+  var apiKey = getApiKey ? getApiKey() : '';
+  if(apiKey){
+    // Appel Claude API
+    callClaude(t, ty);
+  } else {
+    // Fallback assistant basique
+    var resp = getReply(t);
+    if(resp.rapport) window._lastRapport = resp.rapport;
+    setTimeout(function(){
+      ty.remove();
+      addBot(resp.m);
+      saveChatHistory();
+    }, resp.d);
+  }
+}
+// ══ DÉCLARATION MENSUELLE GUIDÉE ══
+const MOIS_LIST = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function openDeclaration(){
+  if(!CU||!CU.villas||CU.villas.length===0){
+    showToast('⚠️ Ajoutez d\'abord une villa depuis le Dashboard');
+    return;
+  }
+  const moisNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const curMois = moisNoms[new Date().getMonth()];
+  const curYear = new Date().getFullYear();
+
+  // Construire les blocs villa
+  let villaBlocks = CU.villas.map(function(v, vi){
+    // Charges fixes de la villa — seulement pisciniste, jardinier, internet
+    const CHARGES_FIXES_KEYS = ['pisciniste','jardinier','internet'];
+    const fixedCharges = v.charges
+      ? Object.entries(v.charges).filter(function(e){ return CHARGES_FIXES_KEYS.includes(e[0].toLowerCase()); })
+      : [];
+    const fixedHtml = fixedCharges.length>0
+      ? '<div style="margin-top:.6rem;padding:.5rem .6rem;background:rgba(201,149,12,.06);border-radius:6px;border-left:2px solid rgba(201,149,12,.3);">'
+        +'<div style="font-size:.62rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Charges fixes déduites auto :</div>'
+        + fixedCharges.map(function(e){
+            return '<div style="display:flex;justify-content:space-between;font-size:.7rem;padding:.1rem 0;">'
+              +'<span style="color:var(--gris);">'+e[0].charAt(0).toUpperCase()+e[0].slice(1)+'</span>'
+              +'<span style="color:var(--blanc);font-weight:600;">'+Number(e[1]).toLocaleString('fr-FR')+' ฿</span>'
+              +'</div>';
+          }).join('')
+        +'</div>'
+      : '';
+
+    return '<div style="background:var(--noir3);border:1px solid rgba(201,149,12,.18);border-radius:10px;padding:.9rem;margin-bottom:.8rem;">'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:var(--or3);font-weight:700;margin-bottom:.75rem;">🏠 '+v.name+'</div>'
+
+      // ── Revenus
+      +'<div style="font-size:.63rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Revenus du mois</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Airbnb</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Booking.com</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_bk" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+
+      // ── Charges variables
+      +'<div style="font-size:.63rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Charges ce mois</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">⚡ Électricité</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_el" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">💧 Eau</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_eau" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">🧹 Ménage</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_men" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">🔧 Divers</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_div" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+
+      // ── Commission (pré-remplie)
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-top:.1rem;">'
+        +'<span style="font-size:.82rem;color:var(--or3);flex:1.4;min-width:90px;font-weight:600;">Commission ACS</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_com" value="'+(v.comPct||20)+'" style="flex:1;text-align:right;border-color:rgba(201,149,12,.3);" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">%</span>'
+      +'</div>'
+
+      + fixedHtml
+      +'</div>';
+  }).join('');
+
+  document.getElementById('modalbody').innerHTML =
+    '<div class="mh"></div>'
+    +'<div style="text-align:center;margin-bottom:1rem;">'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">📋 Déclaration mensuelle</div>'
+      +'<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">Remplissez les montants · laissez vide si zéro</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:.5rem;margin-bottom:1rem;">'
+      +'<select class="form-input" id="decl-mois" style="flex:1.5;">'
+        + moisNoms.map(function(m){ return '<option'+(m===curMois?' selected':'')+'>'+m+'</option>'; }).join('')
+      +'</select>'
+      +'<input class="form-input" id="decl-annee" type="number" value="'+curYear+'" style="width:75px;text-align:center;" />'
+    +'</div>'
+    + villaBlocks
+    +'<button class="save-btn" onclick="submitDeclaration()">✓ Générer mes rapports</button>'
+    +'<button class="cancel-btn" onclick="closeMov()">Annuler</button>';
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function submitDeclaration(){
+  const mois = document.getElementById('decl-mois').value;
+  const annee = document.getElementById('decl-annee').value;
+  const periode = mois+' '+annee;
+  closeMov();
+  goPage('chat');
+
+  const allReports = [];
+
+  CU.villas.forEach(function(v, vi){
+    const air = parseFloat(document.getElementById('d'+vi+'_air')?document.getElementById('d'+vi+'_air').value:0)||0;
+    const bk  = parseFloat(document.getElementById('d'+vi+'_bk') ?document.getElementById('d'+vi+'_bk').value:0)||0;
+    const el  = parseFloat(document.getElementById('d'+vi+'_el') ?document.getElementById('d'+vi+'_el').value:0)||0;
+    const eau = parseFloat(document.getElementById('d'+vi+'_eau')?document.getElementById('d'+vi+'_eau').value:0)||0;
+    const men = parseFloat(document.getElementById('d'+vi+'_men')?document.getElementById('d'+vi+'_men').value:0)||0;
+    const div = parseFloat(document.getElementById('d'+vi+'_div')?document.getElementById('d'+vi+'_div').value:0)||0;
+    const cp  = parseFloat(document.getElementById('d'+vi+'_com')?document.getElementById('d'+vi+'_com').value:v.comPct||20)||20;
+    const rev = air + bk;
+    if(rev===0) return;
+
+    // Charges fixes de la villa — seulement pisciniste, jardinier, internet
+    const FIXED_KEYS = ['pisciniste','jardinier','internet'];
+    const fixedDeps = v.charges
+      ? Object.entries(v.charges)
+          .filter(function(e){ return FIXED_KEYS.includes(e[0].toLowerCase()); })
+          .map(function(e){ return {n:e[0].charAt(0).toUpperCase()+e[0].slice(1),v:e[1]}; })
+      : [];
+    // Charges variables
+    const varDeps = [];
+    if(el>0)  varDeps.push({n:'Électricité',v:el});
+    if(eau>0) varDeps.push({n:'Eau',v:eau});
+    if(men>0) varDeps.push({n:'Ménage',v:men});
+    if(div>0) varDeps.push({n:'Divers',v:div});
+
+    const allDeps = fixedDeps.concat(varDeps);
+    const totalDep = allDeps.reduce(function(s,d){return s+d.v;},0);
+    const com = Math.round(rev * cp / 100);
+    const net = rev - totalDep - com;
+
+    const r = {villa:v.name, mois:periode, rev:rev, deps:allDeps, totalDep:totalDep, cp:cp, com:com, net:net, client:CU?CU.name:''};
+    allReports.push(r);
+    addToHistory(r);
+  });
+
+  if(allReports.length===0){
+    setTimeout(function(){
+      addBot('⚠️ Aucun revenu déclaré. Remplissez au moins Airbnb ou Booking pour une villa.');
+    },300);
+    return;
+  }
+
+  addUser('📋 Déclaration '+periode+' — '+allReports.length+' villa'+(allReports.length>1?'s':''));
+
+  setTimeout(function(){
+    let html='✅ Déclaration <strong>'+periode+'</strong> traitée !<br>';
+    html+='<span style="font-size:.75rem;color:var(--gris);">Cliquez sur l\'onglet Rapports pour télécharger vos PDF.</span><br><br>';
+    allReports.forEach(function(r){ html+=buildCard(r); });
+    addBot(html);
+    saveChatHistory();
+    buildClient(); // Rafraîchir historique
+  },600);
+}
+
+// ══ APPEL CLAUDE API ══
+function callClaude(userMsg, typingEl){
+  var apiKey = getApiKey();
+  // Construire contexte villas
+  var villasCtx = '';
+  if(CU && CU.villas && CU.villas.length>0){
+    villasCtx = '\n\nVillas du client :\n';
+    CU.villas.forEach(function(v){
+      villasCtx += '- '+v.name;
+      if(v.charges){
+        var ch=Object.entries(v.charges).map(function(e){ return e[0]+': '+e[1]+' ฿'; }).join(', ');
+        if(ch) villasCtx += ' (charges fixes: '+ch+')';
+      }
+      if(v.comPct) villasCtx += ' (commission: '+v.comPct+'%)';
+      villasCtx += '\n';
+    });
+  }
+
+  var systemPrompt = `Tu es l'assistant ACS (Accounting Concierge Services), expert en comptabilité de villas de location à Koh Samui, Thaïlande.
+
+TON RÔLE :
+- Analyser les données financières des villas envoyées par le client
+- Générer des rapports mensuels précis : revenus, dépenses, commission ACS, bénéfice net
+- Répondre en français, de façon claire et professionnelle
+- Être flexible sur l'orthographe et le format — comprendre même les messages approximatifs
+
+FORMAT DE RÉPONSE POUR UN RAPPORT :
+Quand l'utilisateur envoie des chiffres (revenus Airbnb, dépenses, commission), réponds TOUJOURS avec ce JSON exact en plus de ton texte :
+<RAPPORT>{"villa":"NOM","mois":"MOIS ANNÉE","rev":MONTANT,"deps":[{"n":"NOM_DEPENSE","v":MONTANT}],"totalDep":TOTAL,"cp":TAUX_COM,"com":MONTANT_COM,"net":BENEFICE_NET}</RAPPORT>
+
+RÈGLES :
+- Les montants sont en bahts thaïlandais (฿)
+- Commission ACS = % des revenus BRUTS
+- Bénéfice net = revenus - dépenses - commission
+- Si données manquantes, demande UNIQUEMENT ce qui manque (revenus OU commission)
+- Sois bref et direct, max 3-4 lignes de texte
+- Vouvoyer le client
+${villasCtx}`;
+
+  // Construire historique messages (5 derniers)
+  var msgs = [];
+  document.querySelectorAll('#chatmsgs .msg').forEach(function(el){
+    if(el.querySelector('.tdots')) return; // skip typing
+    var role = el.classList.contains('usr') ? 'user' : 'assistant';
+    var text = el.querySelector('.bb').innerText || el.querySelector('.bb').textContent;
+    if(text.trim()) msgs.push({role:role, content:text.trim()});
+  });
+  // Garder les 8 derniers + message actuel
+  if(msgs.length>8) msgs=msgs.slice(msgs.length-8);
+  msgs.push({role:'user', content:userMsg});
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:1024,
+      system: systemPrompt,
+      messages: msgs
+    })
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    typingEl.remove();
+    if(data.error){ addBot('❌ Erreur API : '+data.error.message); return; }
+    var text = data.content && data.content[0] ? data.content[0].text : 'Pas de réponse.';
+
+    // Détecter un rapport JSON dans la réponse
+    var rapportMatch = text.match(/<RAPPORT>([\s\S]*?)<\/RAPPORT>/);
+    if(rapportMatch){
+      try{
+        var r = JSON.parse(rapportMatch[1]);
+        // Calculer les manquants
+        if(!r.totalDep) r.totalDep = r.deps ? r.deps.reduce(function(s,d){return s+d.v;},0) : 0;
+        if(!r.com && r.cp && r.rev) r.com = Math.round(r.rev * r.cp / 100);
+        if(!r.net) r.net = r.rev - r.totalDep - (r.com||0);
+        r.pos = r.net >= 0;
+        // Ajouter à l'historique
+        addToHistory(r);
+        // Texte sans le JSON
+        var cleanText = text.replace(/<RAPPORT>[\s\S]*?<\/RAPPORT>/g,'').trim();
+        var msg = (cleanText ? '<p>'+cleanText+'</p>' : '') + buildCard(r);
+        addBot(msg);
+      }catch(e){
+        addBot(text.replace(/<RAPPORT>[\s\S]*?<\/RAPPORT>/g,'').trim());
+      }
+    } else {
+      // Réponse normale — formater le texte
+      var html = text
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\n\n/g,'<br><br>')
+        .replace(/\n/g,'<br>');
+      addBot(html);
+    }
+    saveChatHistory();
+  })
+  .catch(function(err){
+    typingEl.remove();
+    addBot('❌ Erreur de connexion. Vérifiez votre clé API dans Profil → Réglages admin.');
+    console.error('Claude API error:', err);
+  });
+}
+
+function fillC(t){document.getElementById('cin').value=t;document.getElementById('cin').focus();}
+
+// ══ AJOUTER RAPPORT À L'HISTORIQUE ══
+function addToHistory(r){
+  if(!CU) return;
+  // Trouver l'ID client même si CU.id pas défini
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(!cid || !CLIENTS[cid]) return;
+  const entry={
+    id: 'h_'+Date.now(),
+    name: r.villa,
+    period: r.mois,
+    net: r.net,
+    pos: r.net>=0,
+    rev: r.rev,
+    dep: r.totalDep||0,
+    com: r.com||0,
+    details: r,
+    client: CU ? CU.name : '',
+    date: new Date().toLocaleDateString('fr-FR')
+  };
+  if(!CLIENTS[cid].history) CLIENTS[cid].history=[];
+  // Éviter doublons (même villa + même mois)
+  const exists = CLIENTS[cid].history.find(function(h){ return h.name===r.villa && h.period===r.mois; });
+  if(!exists){
+    CLIENTS[cid].history.unshift(entry);
+    save('clients', CLIENTS);
+    // Recharger CU avec les nouvelles données
+    CU = {...CLIENTS[cid], id:cid};
+    // Reconstruire l'interface
+    buildClient();
+    showToast('📋 Rapport ajouté à l\'historique !');
+  }
+}
+
+// ══ GÉNÉRATION PDF RÉELLE ══
+function genPDF(btn, rid){
+  var r = (typeof rid==='string') ? (window._rapports && window._rapports[rid]) : rid;
+  if(!r){ showToast('❌ Rapport introuvable'); return; }
+  if(!window.jspdf){
+    showToast('⏳ Chargement PDF...');
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=function(){ genPDF(btn,rid); };
+    document.head.appendChild(s); return;
+  }
+  try {
+    if(!r.deps) r.deps=[];
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    var W=210, mg=16, y=0;
+
+    // ── PALETTE ──
+    var NOIR   = [8,8,8];
+    var NOIR2  = [18,18,18];
+    var NOIR3  = [26,26,26];
+    var OR     = [201,149,12];
+    var OR3    = [245,208,107];
+    var BLANC  = [242,242,242];
+    var GRIS   = [120,120,120];
+    var ROUGE  = [220,60,60];
+    var VERT   = [74,222,128];
+
+    // ── FOND PAGE ──
+    doc.setFillColor.apply(doc, NOIR2);
+    doc.rect(0,0,W,297,'F');
+
+    // ── HEADER BAND ──
+    doc.setFillColor.apply(doc, NOIR);
+    doc.rect(0,0,W,52,'F');
+
+    // Ligne déco or gauche
+    doc.setFillColor.apply(doc, OR);
+    doc.rect(0,0,3,52,'F');
+
+    // Logo ACS
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(32);
+    doc.setTextColor.apply(doc, OR3);
+    doc.text('ACS',mg+4,22);
+
+    // Tagline
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, GRIS);
+    doc.text('ACCOUNTING CONCIERGE SERVICES',mg+4,30);
+
+    // Ligne séparatrice verticale
+    doc.setDrawColor.apply(doc, OR);
+    doc.setLineWidth(0.3);
+    doc.line(75,8,75,44);
+
+    // Infos rapport à droite du séparateur
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.setTextColor.apply(doc, BLANC);
+    doc.text(String(r.villa||'Villa'), 82, 20);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor.apply(doc, OR3);
+    doc.text(String(r.mois||''), 82, 28);
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, GRIS);
+    doc.text('Rapport généré le '+new Date().toLocaleDateString('fr-FR'), 82, 36);
+
+    // Badge statut net
+    var netPos = (r.net||0)>=0;
+    doc.setFillColor.apply(doc, netPos ? [20,60,30] : [60,15,15]);
+    doc.roundedRect(W-mg-38,10,36,14,2,2,'F');
+    doc.setDrawColor.apply(doc, netPos ? VERT : ROUGE);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(W-mg-38,10,36,14,2,2,'S');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, netPos ? VERT : ROUGE);
+    doc.text(netPos ? 'BÉNÉFICE' : 'DÉFICIT', W-mg-20,17,{align:'center'});
+    var badgeStr = (netPos?'+ ':'')+fmtPDFb(r.net||0);
+    var bFs = 8.5;
+    doc.setFontSize(bFs);
+    while(bFs > 5.5 && doc.getTextWidth(badgeStr) > 32){ bFs -= 0.4; doc.setFontSize(bFs); }
+    doc.text(badgeStr, W-mg-20, 25, {align:'center'});
+
+    // Ligne or bas header
+    doc.setDrawColor.apply(doc, OR);
+    doc.setLineWidth(0.6);
+    doc.line(0,52,W,52);
+
+    y = 62;
+
+    // ── SECTION REVENUS ──
+    function sectionTitle(title, yy){
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor.apply(doc, OR);
+      doc.text(title.toUpperCase(), mg, yy);
+      doc.setDrawColor.apply(doc, OR);
+      doc.setLineWidth(0.25);
+      doc.line(mg + doc.getTextWidth(title.toUpperCase()) + 2, yy - 0.8, W-mg, yy - 0.8);
+      return yy + 7;
+    }
+
+    // Layout colonnes : label [mg+3 .. W/2+20] | valeur [W/2+22 .. W-mg-3]
+    var COL_LABEL_X  = mg + 3;
+    var COL_LABEL_MAX = W * 0.62;          // label occupe 62% de la largeur
+    var COL_VAL_X    = W - mg - 3;        // valeur alignée à droite fixe
+    var ROW_H        = 9;                 // hauteur ligne standard
+
+    function tableRow(label, valeur, bold, colorLeft, colorRight, bg){
+      if(bg){
+        doc.setFillColor.apply(doc, bg);
+        doc.rect(mg, y - ROW_H*0.45, W-2*mg, ROW_H, 'F');
+      }
+      var fs = bold ? 9.5 : 8.5;
+      // ── Label
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setFontSize(fs);
+      doc.setTextColor.apply(doc, colorLeft || BLANC);
+      var labelStr = String(label);
+      // Tronquer dynamiquement si trop long
+      while(labelStr.length > 4 && doc.getTextWidth(labelStr) > (COL_LABEL_MAX - COL_LABEL_X - 2)){
+        labelStr = labelStr.slice(0, -1);
+      }
+      if(labelStr !== String(label)) labelStr += '…'; // ellipse
+      doc.text(labelStr, COL_LABEL_X, y);
+      // ── Valeur (toujours align:'right' sur COL_VAL_X)
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setFontSize(fs);
+      doc.setTextColor.apply(doc, colorRight || BLANC);
+      var valStr = String(valeur);
+      // Sécurité : si valeur dépasse sa zone, réduire la taille
+      var valZone = COL_VAL_X - COL_LABEL_MAX - 2;
+      var fsTmp = fs;
+      while(fsTmp > 6 && doc.getTextWidth(valStr) > valZone){
+        fsTmp -= 0.5;
+        doc.setFontSize(fsTmp);
+      }
+      doc.text(valStr, COL_VAL_X, y, { align: 'right' });
+      doc.setFontSize(fs); // reset
+      // ── Séparateur
+      if(!bold){
+        doc.setDrawColor(45, 45, 45);
+        doc.setLineWidth(0.1);
+        doc.line(mg, y + ROW_H*0.55, W-mg, y + ROW_H*0.55);
+      }
+      y += ROW_H;
+    }
+
+    // Revenus
+    y = sectionTitle('Revenus', y);
+    tableRow('Airbnb, Booking, Location', fmtPDFb(r.rev||0), false, BLANC, OR3);
+    y+=2;
+
+    // Séparation charges fixes / variables
+    var PDF_FIXES = ['pisciniste','jardinier','internet'];
+    var varDeps = r.deps ? r.deps.filter(function(d){ return !PDF_FIXES.includes(d.n.toLowerCase()); }) : [];
+    var fixDeps = r.deps ? r.deps.filter(function(d){ return PDF_FIXES.includes(d.n.toLowerCase()); }) : [];
+
+    if(varDeps.length>0){
+      y = sectionTitle('Charges variables', y);
+      varDeps.forEach(function(d){
+        tableRow(d.n.charAt(0).toUpperCase()+d.n.slice(1), '- '+fmtPDFb(d.v||0), false, BLANC, ROUGE);
+      });
+      y+=2;
+    }
+
+    // Charges fixes
+    if(fixDeps.length>0){
+      y = sectionTitle('Charges fixes', y);
+      fixDeps.forEach(function(d){
+        tableRow(d.n.charAt(0).toUpperCase()+d.n.slice(1), '- '+fmtPDFb(d.v||0), false, BLANC, ROUGE);
+      });
+      y+=2;
+    }
+
+    // Commission
+    if((r.com||0)>0){
+      var clientLabel = r.client || (CU ? CU.name : '') || 'ACS';
+      y = sectionTitle('Commission ' + clientLabel, y);
+      tableRow('Commission ' + r.cp + '% des revenus bruts', '- ' + fmtPDFb(r.com||0), false, BLANC, ROUGE);
+      y+=2;
+    }
+
+    // ── TOTAL NET ──
+    y+=2;
+    doc.setFillColor.apply(doc, netPos ? [12,35,18] : [40,10,10]);
+    doc.roundedRect(mg,y-4,W-2*mg,14,2,2,'F');
+    doc.setDrawColor.apply(doc, netPos ? VERT : ROUGE);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(mg,y-4,W-2*mg,14,2,2,'S');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor.apply(doc, netPos ? VERT : ROUGE);
+    doc.text(netPos ? 'BENEFICE NET' : 'DEFICIT NET', mg+4, y+5);
+    // Valeur nette — taille adaptative
+    var netStr = (netPos?'+ ':'')+fmtPDFb(r.net||0);
+    var netFs = 11;
+    doc.setFontSize(netFs);
+    while(netFs > 7 && doc.getTextWidth(netStr) > 70){ netFs -= 0.5; doc.setFontSize(netFs); }
+    doc.text(netStr, W-mg-4, y+5, {align:'right'});
+    y+=20;
+
+    // ── RÉCAP RAPIDE ──
+    var boxW=(W-2*mg-8)/3;
+    function miniBox(label, val, col, bx){
+      doc.setFillColor.apply(doc, NOIR3);
+      doc.roundedRect(bx, y, boxW, 17, 2, 2, 'F');
+      // Valeur — taille adaptative
+      var mFs = 8;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(mFs);
+      doc.setTextColor.apply(doc, col || OR3);
+      var valS = String(val);
+      while(mFs > 5.5 && doc.getTextWidth(valS) > boxW - 4){ mFs -= 0.4; doc.setFontSize(mFs); }
+      doc.text(valS, bx + boxW/2, y + 7, { align:'center' });
+      // Label
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(6);
+      doc.setTextColor.apply(doc, GRIS);
+      doc.text(label, bx + boxW/2, y + 13, { align:'center' });
+    }
+    miniBox('Revenus bruts', fmtPDFb(r.rev||0), OR3, mg);
+    miniBox('Total charges', fmtPDFb((r.totalDep||0)+(r.com||0)), ROUGE, mg+boxW+4);
+    miniBox('Résultat net', (netPos?'+ ':'')+fmtPDFb(r.net||0), netPos?VERT:ROUGE, mg+2*(boxW+4));
+    y+=24;
+
+    // ── FOOTER ──
+    doc.setFillColor.apply(doc, NOIR);
+    doc.rect(0,272,W,25,'F');
+    doc.setDrawColor.apply(doc, OR);
+    doc.setLineWidth(0.3);
+    doc.line(0,272,W,272);
+    // Ligne or déco gauche
+    doc.setFillColor.apply(doc, OR);
+    doc.rect(0,272,3,25,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor.apply(doc, OR3);
+    doc.text('ACS — Accounting Concierge Services', mg+4, 281);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, GRIS);
+    doc.text('acsconcierge.pro@gmail.com  |  +66 91 333 9323  |  Koh Samui, Thaïlande', mg+4, 288);
+    doc.setTextColor.apply(doc, [60,60,60]);
+    doc.text('Document confidentiel — généré automatiquement', W-mg, 288, {align:'right'});
+
+    // Sauvegarder
+    var fname='ACS_'+(r.villa||'Rapport').replace(/\s+/g,'_')+'_'+(r.mois||'').replace(/\s+/g,'_')+'.pdf';
+    doc.save(fname);
+    showToast('✅ PDF téléchargé !');
+    if(btn){ btn.textContent='✅ Téléchargé'; btn.style.opacity='0.7'; setTimeout(function(){ btn.textContent='📄 Télécharger PDF'; btn.style.opacity='1'; },3000); }
+  } catch(e){
+    console.error('PDF error',e);
+    showToast('❌ Erreur PDF : '+e.message);
+  }
+}
+
+
+// ══ CONV ══
+function openConvWith(name){document.getElementById('cvn').textContent=name;document.getElementById('cvs').textContent='En ligne';const m=document.getElementById('cvmsgs');m.innerHTML=`<div class="msg bot"><div class="bb">Bonjour ! Comment puis-je vous aider ?</div><div class="mt">${now()}</div></div>`;document.getElementById('cv').classList.add('open');}
+function closeCV(){document.getElementById('cv').classList.remove('open');}
+function sendCV(){const inp=document.getElementById('cvin');const t=inp.value.trim();if(!t)return;const m=document.getElementById('cvmsgs');const d=document.createElement('div');d.className='msg usr';d.innerHTML=`<div class="bb">${t}</div><div class="mt">${now()}</div>`;m.appendChild(d);inp.value='';inp.style.height='auto';m.scrollTop=m.scrollHeight;setTimeout(()=>{const r=document.createElement('div');r.className='msg bot';r.innerHTML=`<div class="bb">Bien reçu, je reviens vers vous rapidement 🙏</div><div class="mt">${now()}</div>`;m.appendChild(r);m.scrollTop=m.scrollHeight;},1100);}
+
+// ══ HISTORIQUE ══
+function buildRapportFromHistory(x){
+  var details = x.details || {};
+  return {
+    villa  : x.name   || details.villa   || 'Villa',
+    mois   : x.period || details.mois    || '',
+    rev    : x.rev    || details.rev     || 0,
+    deps   : details.deps || [],
+    totalDep: x.dep   || details.totalDep|| 0,
+    cp     : x.com && x.rev ? Math.round(x.com/x.rev*100) : (details.cp||20),
+    com    : x.com    || details.com     || 0,
+    net    : x.net    || details.net     || 0,
+    client : x.client || details.client  || (CU ? CU.name : '')
+  };
+}
+
+function histItem(x){
+  if(!x) return '';
+  const rapport = buildRapportFromHistory(x);
+  const pos = rapport.net >= 0;
+
+  // Stocker dans window._rapports avec un ID stable basé sur villa+période
+  const rid = 'H_'+(rapport.villa+'_'+rapport.mois).replace(/[^a-zA-Z0-9]/g,'_');
+  window._rapports = window._rapports || {};
+  window._rapports[rid] = rapport;
+  x._rid = rid;
+
+  return '<div class="hi" onclick="genPDF(this,\''+rid+'\')" style="cursor:pointer;transition:all .18s;" '
+    +'onmouseover="this.style.background=\'rgba(201,149,12,.09)\';this.style.borderColor=\'rgba(201,149,12,.4)\';" '
+    +'onmouseout="this.style.background=\'\';this.style.borderColor=\'\';">'
+    +'<div class="hico">🏠</div>'
+    +'<div style="flex:1;min-width:0;">'
+      +'<div class="hin">'+rapport.villa+'</div>'
+      +'<div class="him">'+rapport.mois+'</div>'
+      +(rapport.rev>0?'<div style="font-size:.65rem;color:var(--gris);margin-top:.15rem;">Revenus : '+fmt(rapport.rev)+'</div>':'')
+    +'</div>'
+    +'<div class="hr2" style="align-items:flex-end;">'
+      +'<div class="ha" style="color:'+(pos?'#4ade80':'#f87171')+';margin-bottom:.25rem;">'+(pos?'+ ':'')+fmt(rapport.net)+'</div>'
+      +'<div style="font-size:.62rem;color:var(--or3);font-weight:600;letter-spacing:.04em;">↓ PDF</div>'
+    +'</div>'
+    +'</div>';
+}
+
+// ══ NAVIGATION ══
+function goPage(p){
+  ['dash','chat','hist','msg','profil'].forEach(x=>{
+    document.getElementById('pg-'+x).style.display='none';
+    const n=document.getElementById('nv-'+x);if(n)n.className='ni';
+  });
+  const pg=document.getElementById('pg-'+p);
+  if(pg){pg.style.display='flex';pg.style.flexDirection='column';}
+  const nv=document.getElementById('nv-'+p);if(nv)nv.className='ni on';
+}
+
+// ══ MODAL ══
+function closeMov(e){if(!e||e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
+
+// ══ LOGOUT ══
+function doLogout(){try{sessionStorage.removeItem('acs_session');}catch(e){}CU=null;pin='';fcpin='';document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active');document.getElementById('lid').value='';updDots();}
+
+// ══ UTILS ══
+function fmt(v){
+  const n = Math.abs(Math.round(v||0));
+  return n.toLocaleString('fr-FR')+' ฿';
+}
+function fmtPDF(v){
+  // Formatage manuel pour jsPDF (evite le separateur non-breakable de fr-FR)
+  var n = Math.abs(Math.round(v||0));
+  var s = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return s + ' THB';
+}
+function fmtPDFb(v){
+  // Avec signe baht pour les cellules
+  var n = Math.abs(Math.round(v||0));
+  var s = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return s + ' ฿';
+}
+function now(){const d=new Date();return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function aR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,85)+'px';}
+let toastT;
+function showToast(msg){const el=document.getElementById('toastel');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2300);}
+
+// ══ DIVERS ══
+function openDiversFromChat(){
+  // Appeler openDivers avec le contexte chat
+  openDivers();
+}
+
+function openDivers(){
+  document.getElementById('modalbody').innerHTML=`
+    <div class="mh"></div>
+    <div class="mt2">⚡ Dépenses Diverses</div>
+    ${CU&&CU.villas&&CU.villas.length>1?'<div class="form-group" style="margin-bottom:.6rem;"><label class="form-label">Villa concernée</label><select class="form-input" id="divers-villa-select">'+(CU.villas.map(function(v){return'<option value="'+v.name+'">'+v.name+'</option>';}).join(''))+'</select></div>':'<input type="hidden" id="divers-villa-select" value="'+(CU&&CU.villas&&CU.villas[0]?CU.villas[0].name:'')+'" />'}
+    <div class="mp">Ajoutez des dépenses imprévues à inclure dans votre rapport</div>
+    <div id="divers-list"></div>
+    <button class="add-btn" onclick="addDiversLine()" style="margin-bottom:.8rem;">＋ Ajouter une dépense</button>
+    <button class="save-btn" onclick="saveDivers()">✓ Ajouter au rapport</button>
+    <button class="cancel-btn" onclick="closeMov()">Annuler</button>`;
+  addDiversLine();
+  document.getElementById('modal').classList.add('open');
+}
+let diversCount=0;
+function addDiversLine(){
+  diversCount++;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center;';
+  div.innerHTML=`<input class="form-input" placeholder="Description (ex: réparation clim)" id="div-desc-${diversCount}" style="flex:2;">
+    <input class="form-input" placeholder="Montant ฿" id="div-amt-${diversCount}" type="number" style="flex:1;">
+    <button onclick="this.parentNode.remove()" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:6px;padding:.5rem .7rem;cursor:pointer;font-size:.85rem;">✕</button>`;
+  document.getElementById('divers-list').appendChild(div);
+}
+function saveDivers(){
+  const items=[];
+  document.querySelectorAll('[id^="div-desc-"]').forEach(el=>{
+    const i=el.id.split('-')[2];
+    const desc=el.value.trim();
+    const amt=parseFloat(document.getElementById('div-amt-'+i).value)||0;
+    if(desc&&amt>0) items.push({desc,amt});
+  });
+  if(!items.length){showToast('⚠️ Remplissez au moins une dépense');return;}
+
+  // Récupérer la villa sélectionnée dans le modal divers
+  const villaSelect = document.getElementById('divers-villa-select');
+  const villaName = villaSelect ? villaSelect.value : (CU&&CU.villas&&CU.villas[0]?CU.villas[0].name:'');
+
+  closeMov();
+  diversCount=0;
+
+  const total=items.reduce((s,x)=>s+x.amt,0);
+
+  // Chercher le dernier rapport de cette villa dans l'historique pour le mettre à jour
+  const cid = CU.id || localStorage.getItem('acs_last_id');
+  let rapportMisAJour = null;
+  if(cid && CLIENTS[cid] && CLIENTS[cid].history){
+    // Trouver le rapport le plus récent de cette villa
+    const found = CLIENTS[cid].history.find(function(h){ return h.name===villaName; });
+    if(found){
+      // Ajouter les nouvelles dépenses au rapport
+      if(!found.details) found.details = {villa:found.name,mois:found.period,rev:found.rev||0,deps:[],totalDep:found.dep||0,cp:found.com&&found.rev?Math.round(found.com/found.rev*100):20,com:found.com||0,net:found.net||0};
+      if(!found.details.deps) found.details.deps=[];
+      items.forEach(function(it){ found.details.deps.push({n:it.desc,v:it.amt}); });
+      found.details.totalDep = (found.details.totalDep||0)+total;
+      found.details.net = (found.details.rev||0)-(found.details.totalDep||0)-(found.details.com||0);
+      found.net = found.details.net;
+      found.dep = found.details.totalDep;
+      // Sauvegarder
+      save('clients',CLIENTS);
+      rapportMisAJour = found.details;
+      // Mettre à jour dans window._rapports
+      const key='hist_'+(found.name+'_'+found.period).replace(/\s+/g,'_');
+      window._rapports = window._rapports||{};
+      window._rapports[key] = rapportMisAJour;
+      if(found._rid) window._rapports[found._rid] = rapportMisAJour;
+    }
+  }
+
+  const liste=items.map(x=>'• '+x.desc+' : '+fmt(x.amt)).join('\n');
+  addUser('Dépenses diverses ('+villaName+') :\n'+liste+'\nTotal : '+fmt(total));
+
+  setTimeout(function(){
+    const ridNew='div_'+Date.now();
+    window._rapports = window._rapports||{};
+    if(rapportMisAJour) window._rapports[ridNew]=rapportMisAJour;
+
+    let html='✅ Dépenses diverses enregistrées — <strong>'+fmt(total)+'</strong> déduits.'
+      +'<div class="rc"><div class="rct">⚡ Dépenses diverses — '+villaName+'</div>'
+      +items.map(function(x){return '<div class="rr"><span>'+x.desc+'</span><span class="rn">−'+fmt(x.amt)+'</span></div>';}).join('')
+      +'<div class="rr"><span>TOTAL DIVERS</span><span class="rn">−'+fmt(total)+'</span></div>';
+
+    if(rapportMisAJour){
+      html+='<div class="rr" style="border-top:1px solid rgba(201,149,12,.2);margin-top:.3rem;padding-top:.3rem;">'
+        +'<span style="color:var(--or3);font-weight:600;">Bénéfice net mis à jour</span>'
+        +'<span style="color:'+(rapportMisAJour.net>=0?'#4ade80':'#f87171')+';font-weight:700;">'+(rapportMisAJour.net>=0?'+ ':'')+fmt(rapportMisAJour.net)+'</span></div>';
+      html+='<div class="rb"><button class="rbtn g" onclick="genPDF(this,\''+ridNew+'\')" style="width:100%;border-radius:6px;">📄 Télécharger PDF mis à jour</button></div>';
+    }
+    html+='</div>';
+    addBot(html);
+    saveChatHistory();
+    // Rafraîchir l'historique
+    buildClient();
+  },800);
+}
+
+// Events
+document.getElementById('cin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendM();}});
+document.getElementById('cvin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCV();}});
+
+// ══ NOTIFICATIONS PUSH 19h BANGKOK ══
+// ══ GESTION CLÉ API CLAUDE ══
+function getApiKey(){ return localStorage.getItem('acs_api_key')||''; }
+
+function updateApiKeyUI(){
+  try {
+    const k = getApiKey();
+    const status = document.getElementById('api-key-status');
+    const badge  = document.getElementById('api-key-badge');
+    const cStatus= document.getElementById('client-ai-status');
+    if(k){
+      if(status){ status.textContent='✅ Configurée — Claude actif'; status.style.color='var(--or3)'; }
+      if(badge) { badge.textContent='Modifier'; badge.style.color='var(--gris)'; }
+      if(cStatus){ cStatus.textContent='✅ Connecté à Claude IA'; cStatus.style.color='var(--or3)'; }
+    } else {
+      if(status){ status.textContent='Non configurée'; status.style.color='var(--gris)'; }
+      if(badge) { badge.textContent='Configurer'; badge.style.color='var(--or3)'; }
+      if(cStatus){ cStatus.textContent='Assistant standard actif'; cStatus.style.color='var(--gris)'; }
+    }
+  } catch(e){ console.log('updateApiKeyUI:', e); }
+}
+
+function openApiKeyModal(){
+  const cur = getApiKey();
+  document.getElementById('modalbody').innerHTML=`
+    <div class="mh"></div>
+    <div style="text-align:center;margin-bottom:1.2rem;">
+      <div style="font-size:2rem;margin-bottom:.4rem;">🤖</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;color:var(--or3);">Connecter Claude</div>
+      <div style="font-size:.75rem;color:var(--gris);margin-top:.3rem;">L'assistant parlera avec l'IA d'Anthropic</div>
+    </div>
+    <div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.2);border-radius:8px;padding:.8rem;font-size:.74rem;color:var(--gris);margin-bottom:1rem;line-height:1.6;">
+      📍 Obtenez votre clé sur <strong style="color:var(--or3)">console.anthropic.com</strong><br>
+      → API Keys → Create Key<br>
+      💰 Coût estimé : ~1-2$ / mois pour tous vos clients
+    </div>
+    <div class="form-group">
+      <label class="form-label">Clé API Anthropic</label>
+      <input class="form-input" id="apikey-input" type="password" placeholder="sk-ant-api03-..." value="${cur}" style="font-family:monospace;font-size:.78rem;" />
+    </div>
+    <button class="save-btn" onclick="saveApiKey()">✓ Sauvegarder</button>
+    ${cur?'<button class="cancel-btn" onclick="deleteApiKey()" style="margin-top:.4rem;background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);color:#f87171;">🗑 Supprimer la clé</button>':''}
+    <button class="cancel-btn" onclick="closeMov()">Annuler</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveApiKey(){
+  const k = document.getElementById('apikey-input').value.trim();
+  if(!k.startsWith('sk-ant')){ showToast('⚠️ Clé invalide — commence par sk-ant'); return; }
+  localStorage.setItem('acs_api_key', k);
+  closeMov();
+  updateApiKeyUI();
+  showToast('✅ Claude connecté ! L\'assistant est maintenant intelligent.');
+}
+
+function deleteApiKey(){
+  localStorage.removeItem('acs_api_key');
+  closeMov();
+  updateApiKeyUI();
+  showToast('🔌 Clé supprimée — assistant basique réactivé');
+}
+
+// ══ SERVICE WORKER + NOTIFICATIONS PUSH 19H ══
+let swReg = null;
+
+function initNotifications(){
+  if(!('serviceWorker' in navigator) || !('Notification' in window)) return;
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    swReg = reg;
+    console.log('[ACS] Service Worker enregistré');
+    if(Notification.permission === 'granted') {
+      sendScheduleToSW();
+    } else if(Notification.permission === 'default') {
+      setTimeout(() => {
+        Notification.requestPermission().then(p => {
+          if(p === 'granted') sendScheduleToSW();
+        });
+      }, 2500);
+    }
+  }).catch(e => console.log('[ACS] SW error:', e));
+}
+
+function sendScheduleToSW() {
+  const villas = CU && CU.villas ? CU.villas.map(v => v.name) : [];
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active && reg.active.postMessage({
+      type: 'SCHEDULE_19H',
+      villaNames: villas,
+      userName: CU ? CU.name : ''
+    });
+  });
+}
+
+function testNotif(){
+  if(!('serviceWorker' in navigator)){showToast('❌ Non supporté sur ce navigateur');return;}
+  if(Notification.permission === 'granted'){
+    const villas = CU && CU.villas ? CU.villas.map(v => v.name) : ['votre villa'];
+    navigator.serviceWorker.ready.then(reg => {
+      reg.active && reg.active.postMessage({
+        type: 'TEST_NOTIF',
+        villaNames: villas,
+        userName: CU ? CU.name : ''
+      });
+    });
+    showToast('🔔 Notification test envoyée !');
+  } else if(Notification.permission === 'default'){
+    Notification.requestPermission().then(p => {
+      if(p === 'granted'){ sendScheduleToSW(); showToast('✅ Notifications activées !'); }
+      else showToast('❌ Notifications refusées — activez dans les réglages');
+    });
+  } else {
+    showToast('❌ Bloquées — activez dans Réglages > Safari/Chrome > Notifications');
+  }
+}
+
+// ══ RESET DEMO DATA si anciennes données détectées ══
+(function(){
+  try {
+    const stored = localStorage.getItem('acs_clients');
+    if(stored) {
+      const parsed = JSON.parse(stored);
+      if(parsed['almon.eye'] || parsed['baan.talay']) {
+        localStorage.removeItem('acs_clients');
+      }
+    }
+  } catch(e) { localStorage.removeItem('acs_clients'); }
+})();
+
+// ══ RESTAURER SESSION AU REFRESH ══
+(function(){
+  try {
+    const sid = sessionStorage.getItem('acs_session');
+    if(!sid) return;
+    // Recharger CLIENTS en cas de modifs
+    CLIENTS = load('clients', DEFAULT_CLIENTS);
+    let user = null;
+    if(sid === 'admin') user = {...ADMIN, id:'admin'};
+    else if(CLIENTS[sid]) user = {...CLIENTS[sid], id:sid};
+    if(user) {
+      CU = user;
+      // Marquer email comme fait pour éviter la reprompt au refresh
+      if(sid !== 'admin') localStorage.setItem('acs_email_done_'+sid,'1');
+      document.addEventListener('DOMContentLoaded', function(){
+        document.getElementById('login').classList.remove('active');
+        document.getElementById('app').classList.add('active');
+        const av = document.getElementById('topav');
+        av.textContent = CU.initials;
+        av.className = CU.role==='admin' ? 'av adm' : 'av';
+        if(CU.role==='admin'){ buildAdmin(); goPage('dash'); }
+        else { buildClient(); initNotifications(); goPage('dash'); }
+        buildProfile(); buildThreads(); initChat();
+      });
+    }
+  } catch(e) { console.log('Session restore error:', e); }
+})();
+
+// ══ PRÉ-REMPLIR IDENTIFIANT ══
+(function(){
+  try {
+    const lastId = localStorage.getItem('acs_last_id');
+    if(lastId) {
+      document.getElementById('lid').value = lastId;
+      // Masquer le champ identifiant proprement après chargement DOM
+      document.addEventListener('DOMContentLoaded', function(){
+        const input = document.getElementById('lid');
+        const label = input.previousElementSibling;
+        if(input) input.style.display = 'none';
+        if(label && label.classList.contains('fl')) label.style.display = 'none';
+        // Ajouter nom connu si possible
+        const stored = localStorage.getItem('acs_clients');
+        let userName = lastId;
+        if(stored){ try{ const p=JSON.parse(stored); if(p[lastId]) userName=p[lastId].name; }catch(e){} }
+        const hint = document.createElement('div');
+        hint.style.cssText = 'text-align:center;margin-bottom:1rem;animation:fU .5s ease both;';
+        hint.innerHTML = '<div style="font-size:.88rem;font-weight:600;color:var(--blanc);margin-bottom:.2rem;">'+userName+'</div><span onclick="clearSavedId()" style="font-size:.68rem;color:var(--gris);cursor:pointer;text-decoration:underline;">Pas vous ?</span>';
+        input.parentNode.insertBefore(hint, input);
+      });
+    }
+  } catch(e) {}
+})();
+
+// ══ CAPTURE EMAIL PREMIÈRE CONNEXION ══
+function showEmailCapture(id, user) {
+  // Masquer login, montrer capture email
+  document.getElementById('login').style.display = 'none';
+  const overlay = document.createElement('div');
+  overlay.id = 'email-capture';
+  overlay.style.cssText = 'position:fixed;inset:0;background:var(--noir);display:flex;align-items:center;justify-content:center;z-index:1000;padding:2rem;';
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:320px;text-align:center;">
+      <div style="font-family:Cormorant Garamond,serif;font-size:3rem;font-weight:700;color:var(--or3);letter-spacing:.15em;margin-bottom:.3rem;">ACS</div>
+      <div style="font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);margin-bottom:2rem;">Bienvenue ${user.name} 👋</div>
+      <div style="background:var(--noir2);border:1px solid var(--gris2);border-radius:10px;padding:1.5rem;">
+        <div style="font-size:1.1rem;font-weight:600;margin-bottom:.4rem;">Votre adresse email</div>
+        <div style="font-size:.78rem;color:var(--gris);margin-bottom:1.2rem;line-height:1.5;">
+          Pour recevoir vos rapports et réinitialiser votre PIN si nécessaire
+        </div>
+        <div style="text-align:left;margin-bottom:.4rem;">
+          <div style="font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);margin-bottom:.35rem;">Email</div>
+          <input id="ec-email" type="email" placeholder="votre@email.com" style="width:100%;background:var(--noir3);border:1px solid var(--gris2);color:var(--blanc);font-family:DM Sans,sans-serif;font-size:.9rem;padding:.75rem .9rem;border-radius:10px;outline:none;margin-bottom:1rem;" />
+        </div>
+        <button onclick="saveEmailAndContinue('${id}')" style="width:100%;padding:.85rem;background:linear-gradient(135deg,var(--or),var(--or3));color:var(--noir);font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-bottom:.6rem;">
+          Continuer →
+        </button>
+        <div onclick="skipEmailCapture()" style="font-size:.72rem;color:var(--gris);cursor:pointer;text-decoration:underline;">
+          Passer pour l'instant
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function saveEmailAndContinue(id) {
+  const email = document.getElementById('ec-email').value.trim();
+  if(!email || !email.includes('@')) { 
+    document.getElementById('ec-email').style.borderColor='var(--rouge)';
+    return; 
+  }
+  try { 
+    localStorage.setItem('acs_email_'+id, email);
+    localStorage.setItem('acs_email_done_'+id, '1'); // flag 1ère connexion terminée
+    sessionStorage.setItem('acs_session', id);
+  } catch(e) {}
+  if(CLIENTS[id]) { CLIENTS[id].email = email; save('clients', CLIENTS); }
+  removeEmailCapture();
+  initApp();
+}
+
+function skipEmailCapture() {
+  // Marquer comme vu même si skippé — ne plus redemander
+  const id = localStorage.getItem('acs_last_id') || '';
+  if(id) localStorage.setItem('acs_email_done_'+id, '1');
+  removeEmailCapture();
+  initApp();
+}
+
+function removeEmailCapture() {
+  const el = document.getElementById('email-capture');
+  if(el) el.remove();
+  document.getElementById('login').style.display = '';
+}
+
+// ══ RESET PIN ══
+function openResetPin() {
+  // Recharger les clients pour avoir les données à jour
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  const id = (document.getElementById('lid').value||'').trim().toLowerCase() || localStorage.getItem('acs_last_id')||'';
+  if(!id) { showToast('⚠️ Entrez votre identifiant en premier'); return; }
+  if(!CLIENTS[id] && id !== 'admin') {
+    showToast('⚠️ Identifiant introuvable. Contactez ACS : +66 91 333 9323');
+    return;
+  }
+  const email = id !== 'admin' ? (localStorage.getItem('acs_email_'+id) || (CLIENTS[id] && CLIENTS[id].email) || '') : '';
+  showPinResetModal(id, email);
+}
+
+function showPinResetModal(id, email) {
+  // Générer un nouveau PIN aléatoire
+  const newPin = String(Math.floor(1000 + Math.random() * 9000));
+  
+  document.getElementById('modalbody').innerHTML = `
+    <div class="mh"></div>
+    <div style="text-align:center;padding:.5rem 0;">
+      <div style="font-size:2rem;margin-bottom:.8rem;">🔐</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;color:var(--or3);margin-bottom:.3rem;">Réinitialiser le PIN</div>
+      ${email ? `
+        <div style="font-size:.78rem;color:var(--gris);margin-bottom:1.2rem;line-height:1.5;">
+          En production, un email serait envoyé à<br><strong style="color:var(--blanc)">${email}</strong>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border:1px solid rgba(201,149,12,.35);border-radius:10px;padding:1.2rem;margin-bottom:1rem;">
+          <div style="font-size:.7rem;color:var(--gris);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;">Votre nouveau PIN</div>
+          <div style="font-family:Cormorant Garamond,serif;font-size:3rem;font-weight:700;color:var(--or3);letter-spacing:.5em;">${newPin}</div>
+          <div style="font-size:.7rem;color:var(--gris);margin-top:.4rem;">Notez-le et changez-le dès la connexion</div>
+        </div>
+        <button class="save-btn" onclick="applyNewPin('${id}','${newPin}')">✓ Appliquer ce PIN</button>
+      ` : `
+        <div style="font-size:.78rem;color:var(--gris);margin-bottom:1.2rem;line-height:1.5;">
+          Aucun email enregistré pour ce compte.<br>Contactez votre gestionnaire ACS.
+        </div>
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);margin-bottom:.35rem;text-align:left;">Entrez votre email</div>
+          <input id="rp-email" type="email" placeholder="votre@email.com" class="form-input" />
+        </div>
+        <button class="save-btn" onclick="resetPinWithEmail('${id}','${newPin}')">Réinitialiser</button>
+      `}
+      <button class="cancel-btn" onclick="closeMov()">Annuler</button>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function applyNewPin(id, newPin) {
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  if(id && CLIENTS[id]) {
+    CLIENTS[id].pin = String(newPin);
+    save('clients', CLIENTS);
+    // Effacer la session pour forcer reconnexion
+    try{ sessionStorage.removeItem('acs_session'); }catch(e){}
+    closeMov();
+    showToast('✅ PIN changé : ' + newPin + ' — Connectez-vous avec ce nouveau PIN');
+    pin=''; updDots();
+  } else {
+    closeMov();
+    showToast('❌ Impossible de modifier — contactez ACS');
+  }
+}
+
+function resetPinWithEmail(id, newPin) {
+  const email = document.getElementById('rp-email').value.trim();
+  if(!email || !email.includes('@')) { showToast('⚠️ Email invalide'); return; }
+  try { localStorage.setItem('acs_email_'+id, email); } catch(e) {}
+  if(CLIENTS[id]) { CLIENTS[id].email = email; CLIENTS[id].pin = newPin; save('clients', CLIENTS); }
+  closeMov();
+  showToast('✅ Nouveau PIN : ' + newPin + ' — Reconnectez-vous');
+  pin=''; updDots();
+}
+
+function clearSavedId(){
+  try{localStorage.removeItem('acs_last_id');}catch(e){}
+  document.getElementById('lid').value='';
+}
+
+// Init page display
+goPage('dash');
+</script>
+</body>
+</html>
