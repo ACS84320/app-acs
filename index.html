@@ -717,23 +717,17 @@ function buildClient(){
     <div class="kc"><div class="kl">Revenus ${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]}</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
     <div class="kc"><div class="kl">Bénéfice net</div><div class="kv">${fmt(totalNet)}</div><div class="kd ${totalNet>0?'up':''}">${u.villas.length} villa${u.villas.length>1?'s':''}</div></div>
   </div>
-  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);padding:.9rem;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);cursor:pointer;" onclick="this.querySelector('.com-detail').style.display=this.querySelector('.com-detail').style.display==='none'?'block':'none'">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
       <div><div class="kl">💰 Commissions générées</div><div class="kv">${fmt(totalCom)}</div><div class="kd up">${totalRev>0?comPct+'% des revenus bruts':'Aucune déclaration'}</div></div>
+      <div style="text-align:right;"><div style="font-size:.6rem;color:var(--gris);letter-spacing:.06em;text-transform:uppercase;">${u.villas.length} villa${u.villas.length>1?'s':''}</div><div style="font-size:.75rem;color:var(--or3);margin-top:.15rem;">Détail ▾</div></div>
     </div>
-    <div style="margin-top:.6rem;height:4px;background:var(--gris2);border-radius:2px;overflow:hidden;">
-      <div style="height:100%;width:${comPct}%;background:linear-gradient(90deg,var(--or),var(--or3));border-radius:2px;"></div>
-    </div>
-    ${u.villas.length>0?`<div style="margin-top:.7rem;padding-top:.6rem;border-top:1px solid rgba(201,149,12,.15);">
-      <div style="font-size:.6rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem;">Détail par villa</div>
-      ${u.villas.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.3rem .4rem;margin-bottom:.25rem;background:rgba(255,255,255,.03);border-radius:5px;">
-        <div style="display:flex;align-items:center;gap:.4rem;">
-          <span style="font-size:.72rem;color:var(--blanc);font-weight:500;">🏠 ${v.name}</span>
-          <span style="font-size:.6rem;color:var(--gris);">${v.comPct||20}%</span>
-        </div>
-        <span style="font-size:.78rem;color:var(--or3);font-weight:700;">${fmt(v.com||0)}</span>
+    <div class="com-detail" style="display:none;margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(201,149,12,.15);">
+      ${u.villas.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem .3rem;margin-bottom:.2rem;background:rgba(255,255,255,.03);border-radius:5px;">
+        <span style="font-size:.72rem;color:var(--blanc);">🏠 ${v.name} <span style="color:var(--gris);font-size:.6rem;">${v.comPct||20}%</span></span>
+        <span style="font-size:.75rem;color:var(--or3);font-weight:700;">${fmt(v.com||0)}</span>
       </div>`).join('')}
-    </div>`:''}
+    </div>
   </div>
   <div class="qb" onclick="openDeclaration()" style="border-color:rgba(201,149,12,.5);background:rgba(201,149,12,.07);"><div class="qi">📋</div><div class="qt"><strong>Déclarer ce mois</strong><small>Formulaire guidé — rapide et simple</small></div><div class="qa">›</div></div>
   <div class="qb" onclick="openDivers()" style="border-color:rgba(124,58,237,.35);background:rgba(124,58,237,.05);"><div class="qi" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">⚡</div><div class="qt"><strong>Dépenses diverses</strong><small>Ajouter une dépense imprévue</small></div><div class="qa">›</div></div>
@@ -1454,11 +1448,14 @@ function openAirbnbConnect(villaId){
     h+='<div style="font-size:.78rem;color:var(--blanc);font-weight:600;margin-bottom:.5rem;">Comment ça marche ?</div>';
     h+='<div style="font-size:.72rem;color:var(--gris);line-height:1.6;">';
     h+='1. Entrez l\'URL ou l\'ID de votre listing Airbnb<br>';
-    h+='2. ACS suivra vos réservations automatiquement<br>';
-    h+='3. Les montants seront pré-remplis dans vos déclarations';
+    h+='2. Ajoutez votre lien iCal pour synchroniser votre calendrier<br>';
+    h+='3. Les réservations et montants seront pré-remplis automatiquement';
     h+='</div></div>';
     h+='<div class="form-group"><label class="form-label">URL ou ID du listing Airbnb *</label>';
     h+='<input class="form-input" id="airbnb-url" placeholder="Ex: airbnb.com/rooms/12345 ou 12345" /></div>';
+    h+='<div class="form-group"><label class="form-label">Lien calendrier iCal (optionnel)</label>';
+    h+='<input class="form-input" id="airbnb-ical" placeholder="https://www.airbnb.com/calendar/ical/..." />';
+    h+='<div style="font-size:.62rem;color:var(--gris);margin-top:.25rem;line-height:1.5;">Trouvable dans Airbnb → Annonce → Tarification → Exporter le calendrier</div></div>';
     h+='<div class="form-group"><label class="form-label">Nom sur Airbnb (optionnel)</label>';
     h+='<input class="form-input" id="airbnb-name" placeholder="'+v.name+'" value="'+v.name+'" /></div>';
     h+='<button class="save-btn" style="background:linear-gradient(135deg,#FF5A5F,#FF385C);color:#fff;" onclick="connectAirbnb(\''+villaId+'\')"><span style="color:#FF5A5F;">⌂</span> Connecter Airbnb</button>';
@@ -1467,7 +1464,23 @@ function openAirbnbConnect(villaId){
     h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
     h+='<div><div style="font-size:.75rem;color:var(--gris);">Listing ID</div><div style="font-size:.9rem;font-weight:600;color:#FF5A5F;">'+v.airbnbId+'</div></div>';
     h+='<div style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);padding:.2rem .6rem;border-radius:20px;font-size:.65rem;color:#4ade80;font-weight:600;">Connecté</div>';
-    h+='</div></div>';
+    h+='</div>';
+    if(v.icalUrl){
+      h+='<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,90,95,.1);">';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+      h+='<div><div style="font-size:.62rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">📅 Calendrier iCal</div>';
+      h+='<div style="font-size:.68rem;color:#4ade80;margin-top:.1rem;">'+(v.lastSync?'Dernière sync : '+v.lastSync:'Jamais synchronisé')+'</div></div>';
+      h+='<button onclick="syncIcal(\''+villaId+'\')" style="background:rgba(255,90,95,.1);border:1px solid rgba(255,90,95,.3);color:#FF5A5F;border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-size:.72rem;font-weight:600;">🔄 Sync</button>';
+      h+='</div></div>';
+    } else {
+      h+='<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,90,95,.1);">';
+      h+='<div style="font-size:.65rem;color:var(--gris);margin-bottom:.3rem;">Ajoutez votre lien iCal pour synchroniser automatiquement</div>';
+      h+='<div style="display:flex;gap:.4rem;">';
+      h+='<input class="form-input" id="ical-url-add" placeholder="https://www.airbnb.com/calendar/ical/..." style="flex:1;font-size:.72rem;" />';
+      h+='<button onclick="saveIcalUrl(\''+villaId+'\')" style="background:rgba(255,90,95,.15);border:1px solid rgba(255,90,95,.3);color:#FF5A5F;border-radius:6px;padding:.35rem .6rem;cursor:pointer;font-size:.72rem;font-weight:600;white-space:nowrap;">📅 Ajouter</button>';
+      h+='</div></div>';
+    }
+    h+='</div>';
 
     // Résumé des réservations connues
     var resa = v.reservations || [];
@@ -1516,6 +1529,8 @@ function connectAirbnb(villaId){
   var id = url.replace(/.*rooms\//,'').replace(/\?.*/,'').replace(/[^0-9a-zA-Z_-]/g,'');
   if(!id) id = url;
   var airbnbName = (document.getElementById('airbnb-name').value||'').trim();
+  var icalUrl = (document.getElementById('airbnb-ical')||{}).value;
+  icalUrl = icalUrl ? icalUrl.trim() : '';
 
   var cid = CU.id || localStorage.getItem('acs_last_id');
   CLIENTS = load('clients', DEFAULT_CLIENTS);
@@ -1523,11 +1538,115 @@ function connectAirbnb(villaId){
   if(!v) return;
   v.airbnbId = id;
   v.airbnbName = airbnbName || v.name;
+  if(icalUrl) v.icalUrl = icalUrl;
   if(!v.reservations) v.reservations = [];
   save('clients', CLIENTS);
   CU = {...CLIENTS[cid], id:cid};
   showToast('✅ Airbnb connecté !');
-  openAirbnbConnect(villaId);
+  // Si iCal fourni, lancer la sync
+  if(icalUrl) syncIcal(villaId);
+  else openAirbnbConnect(villaId);
+}
+
+function saveIcalUrl(villaId){
+  var icalUrl = (document.getElementById('ical-url-add')||{}).value;
+  icalUrl = icalUrl ? icalUrl.trim() : '';
+  if(!icalUrl){showToast('⚠️ Entrez le lien iCal');return;}
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v) return;
+  v.icalUrl = icalUrl;
+  save('clients', CLIENTS);
+  CU = {...CLIENTS[cid], id:cid};
+  showToast('✅ Lien iCal enregistré');
+  syncIcal(villaId);
+}
+
+function syncIcal(villaId){
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v || !v.icalUrl){showToast('⚠️ Aucun lien iCal configuré');return;}
+  showToast('🔄 Synchronisation du calendrier...');
+
+  // Utiliser un proxy CORS pour récupérer le fichier iCal
+  var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(v.icalUrl);
+  fetch(proxyUrl)
+    .then(function(res){
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return res.text();
+    })
+    .then(function(icalData){
+      var events = parseIcal(icalData);
+      if(events.length===0){
+        showToast('📅 Calendrier synchronisé — aucune réservation trouvée');
+      } else {
+        // Fusionner avec les réservations existantes (sans doublons)
+        if(!v.reservations) v.reservations = [];
+        var added = 0;
+        events.forEach(function(evt){
+          var exists = v.reservations.find(function(r){
+            return r.checkin===evt.checkin && r.checkout===evt.checkout;
+          });
+          if(!exists){
+            v.reservations.push(evt);
+            added++;
+          }
+        });
+        // Trier par date de check-in
+        v.reservations.sort(function(a,b){ return new Date(a.checkin)-new Date(b.checkin); });
+        v.lastSync = new Date().toLocaleDateString('fr-FR')+' '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        save('clients', CLIENTS);
+        CU = {...CLIENTS[cid], id:cid};
+        showToast('✅ '+added+' nouvelle'+(added>1?'s':'')+' réservation'+(added>1?'s':'')+' importée'+(added>1?'s':'')+'  ('+events.length+' total)');
+      }
+      openAirbnbConnect(villaId);
+    })
+    .catch(function(err){
+      console.error('iCal sync error:', err);
+      showToast('❌ Impossible de synchroniser — vérifiez le lien iCal');
+      openAirbnbConnect(villaId);
+    });
+}
+
+function parseIcal(icalData){
+  var events = [];
+  var blocks = icalData.split('BEGIN:VEVENT');
+  for(var i=1; i<blocks.length; i++){
+    var block = blocks[i].split('END:VEVENT')[0];
+    var evt = {};
+    // Extraire DTSTART
+    var dtstart = block.match(/DTSTART[^:]*:(\d{8})/);
+    if(dtstart) evt.checkin = dtstart[1].substring(0,4)+'-'+dtstart[1].substring(4,6)+'-'+dtstart[1].substring(6,8);
+    // Extraire DTEND
+    var dtend = block.match(/DTEND[^:]*:(\d{8})/);
+    if(dtend) evt.checkout = dtend[1].substring(0,4)+'-'+dtend[1].substring(4,6)+'-'+dtend[1].substring(6,8);
+    // Extraire SUMMARY (nom du voyageur)
+    var summary = block.match(/SUMMARY[^:]*:([^\r\n]+)/);
+    if(summary) evt.guest = summary[1].trim();
+    // Extraire DESCRIPTION
+    var desc = block.match(/DESCRIPTION[^:]*:([^\r\n]+)/);
+    if(desc) evt.description = desc[1].trim();
+
+    if(evt.checkin && evt.checkout){
+      var nights = Math.max(1, Math.ceil((new Date(evt.checkout)-new Date(evt.checkin))/86400000));
+      evt.nights = nights;
+      evt.source = 'Airbnb (iCal)';
+      evt.amount = 0; // Montant inconnu depuis iCal — l'utilisateur devra le renseigner
+      // Essayer d'extraire un montant depuis la description si disponible
+      if(evt.description){
+        var amtMatch = evt.description.match(/(\d[\d\s,.]*)\s*(?:THB|฿|baht)/i);
+        if(amtMatch) evt.amount = parseFloat(amtMatch[1].replace(/[\s,]/g,''))||0;
+      }
+      // Ignorer les événements "blocked" ou "Not available"
+      var guestLower = (evt.guest||'').toLowerCase();
+      if(guestLower.indexOf('not available')<0 && guestLower.indexOf('blocked')<0 && guestLower.indexOf('airbnb (not available)')<0){
+        events.push(evt);
+      }
+    }
+  }
+  return events;
 }
 
 function disconnectAirbnb(villaId){
@@ -1537,6 +1656,8 @@ function disconnectAirbnb(villaId){
   if(!v) return;
   delete v.airbnbId;
   delete v.airbnbName;
+  delete v.icalUrl;
+  delete v.lastSync;
   save('clients', CLIENTS);
   CU = {...CLIENTS[cid], id:cid};
   showToast('✅ Airbnb déconnecté');
@@ -1616,6 +1737,24 @@ function getAirbnbRevenue(villa, mois, annee){
   });
   var total = matched.reduce(function(s,r){return s+(r.amount||0);},0);
   return {total:total, count:matched.length, details:matched};
+}
+
+function getLocationRevenue(villa, mois, annee){
+  var MOIS_NOMS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var moisIdx = MOIS_NOMS.indexOf(mois);
+  if(moisIdx < 0) return {total:0, count:0, airbnb:0, booking:0};
+  var locs = villa.locations || [];
+  var matched = [];
+  locs.forEach(function(loc){
+    var d = new Date(loc.from);
+    if(d.getMonth()===moisIdx && d.getFullYear()===parseInt(annee)){
+      matched.push(loc);
+    }
+  });
+  var total = matched.reduce(function(s,l){return s+(l.amount||0);},0);
+  var airbnb = matched.filter(function(l){ return (l.platform||'').toLowerCase().indexOf('airbnb')>=0; }).reduce(function(s,l){return s+(l.amount||0);},0);
+  var booking = matched.filter(function(l){ return (l.platform||'').toLowerCase().indexOf('booking')>=0; }).reduce(function(s,l){return s+(l.amount||0);},0);
+  return {total:total, count:matched.length, airbnb:airbnb, booking:booking};
 }
 
 function confirmDeleteVilla(id_unused){
@@ -1840,11 +1979,16 @@ function openDeclaration(){
 
     // Calculer revenus Airbnb connus pour ce mois
     var airbnbData = getAirbnbRevenue(v, curMois, curYear);
+    // Calculer revenus des locations enregistrées pour ce mois
+    var locRevenue = getLocationRevenue(v, curMois, curYear);
+    var totalSuggested = airbnbData.total + locRevenue.total;
     var airbnbHint = '';
-    if(airbnbData.count > 0){
-      airbnbHint = '<div style="background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.15);border-radius:6px;padding:.45rem .6rem;margin-bottom:.5rem;font-size:.68rem;color:var(--gris);line-height:1.5;">'
-        +'<span style="color:#FF5A5F;font-weight:600;">⌂ '+airbnbData.count+' réservation'+(airbnbData.count>1?'s':'')+' Airbnb</span> détectée'+(airbnbData.count>1?'s':'')+' : <span style="color:#4ade80;font-weight:600;">'+fmt(airbnbData.total)+'</span>'
-        +'<br><span style="font-size:.62rem;">Montant pré-rempli — modifiez si nécessaire</span>'
+    if(airbnbData.count > 0 || locRevenue.count > 0){
+      airbnbHint = '<div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:6px;padding:.45rem .6rem;margin-bottom:.5rem;font-size:.68rem;color:var(--gris);line-height:1.5;">'
+        +'<div style="font-weight:600;color:var(--or3);margin-bottom:.2rem;">💡 Revenus détectés ce mois</div>'
+        +(airbnbData.count>0?'<div><span style="color:#FF5A5F;font-weight:600;">⌂ '+airbnbData.count+' résa Airbnb</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(airbnbData.total)+'</span></div>':'')
+        +(locRevenue.count>0?'<div><span style="color:var(--or3);font-weight:600;">📅 '+locRevenue.count+' location'+(locRevenue.count>1?'s':'')+' enregistrée'+(locRevenue.count>1?'s':'')+'</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(locRevenue.total)+'</span></div>':'')
+        +(totalSuggested>0?'<div style="margin-top:.3rem;font-size:.65rem;font-weight:600;color:#4ade80;">Total suggéré : '+fmt(totalSuggested)+' — montants pré-remplis</div>':'')
         +'</div>';
     }
 
@@ -1856,12 +2000,12 @@ function openDeclaration(){
       + airbnbHint
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
         +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Airbnb</span>'
-        +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" value="'+(airbnbData.total>0?airbnbData.total:'')+'" style="flex:1;text-align:right;'+(airbnbData.total>0?'border-color:rgba(255,90,95,.3);':'')+'" inputmode="numeric"/>'
+        +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" value="'+((airbnbData.total+locRevenue.airbnb)>0?(airbnbData.total+locRevenue.airbnb):'')+'" style="flex:1;text-align:right;'+((airbnbData.total+locRevenue.airbnb)>0?'border-color:rgba(255,90,95,.3);':'')+'" inputmode="numeric"/>'
         +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
         +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Booking.com</span>'
-        +'<input class="form-input" type="number" id="d'+vi+'_bk" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<input class="form-input" type="number" id="d'+vi+'_bk" placeholder="0" value="'+(locRevenue.booking>0?locRevenue.booking:'')+'" style="flex:1;text-align:right;'+(locRevenue.booking>0?'border-color:rgba(74,222,128,.3);':'')+'" inputmode="numeric"/>'
         +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
       +'</div>'
 
@@ -2815,7 +2959,7 @@ function histItem(x){
   window._rapports[rid] = rapport;
   x._rid = rid;
 
-  return '<div class="hi" onclick="genPDF(this,\''+rid+'\')" style="cursor:pointer;transition:all .18s;" '
+  return '<div class="hi" onclick="openReportAction(\''+rid+'\')" style="cursor:pointer;transition:all .18s;" '
     +'onmouseover="this.style.background=\'rgba(201,149,12,.09)\';this.style.borderColor=\'rgba(201,149,12,.4)\';" '
     +'onmouseout="this.style.background=\'\';this.style.borderColor=\'\';">'
     +'<div class="hico">🏠</div>'
@@ -2826,9 +2970,151 @@ function histItem(x){
     +'</div>'
     +'<div class="hr2" style="align-items:flex-end;">'
       +'<div class="ha" style="color:'+(pos?'#4ade80':'#f87171')+';margin-bottom:.25rem;">'+(pos?'+ ':'')+fmt(rapport.net)+'</div>'
-      +'<div style="font-size:.62rem;color:var(--or3);font-weight:600;letter-spacing:.04em;">↓ PDF</div>'
+      +'<div style="font-size:.62rem;color:var(--or3);font-weight:600;letter-spacing:.04em;">📄 / ✏️</div>'
     +'</div>'
     +'</div>';
+}
+
+// ══ ACTION RAPPORT : PDF ou Modifier ══
+function openReportAction(rid){
+  var r = window._rapports && window._rapports[rid];
+  if(!r){ showToast('❌ Rapport introuvable'); return; }
+  var pos = r.net >= 0;
+  var h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:1rem;">';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:var(--or3);">'+r.villa+'</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">'+r.mois+' · Net : <span style="color:'+(pos?'#4ade80':'#f87171')+';font-weight:600;">'+(pos?'+':'')+fmt(r.net)+'</span></div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:.6rem;margin-bottom:.8rem;">';
+  h+='<button class="save-btn" style="flex:1;font-size:.82rem;" onclick="closeMov();genPDF(null,\''+rid+'\')">📄 Télécharger PDF</button>';
+  h+='<button class="save-btn" style="flex:1;font-size:.82rem;background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.35);color:#a855f7;" onclick="openEditReport(\''+rid+'\')">✏️ Modifier</button>';
+  h+='</div>';
+  h+='<button class="cancel-btn" onclick="closeMov()">Annuler</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
+}
+
+// ══ MODIFIER UN RAPPORT ══
+function openEditReport(rid){
+  var r = window._rapports && window._rapports[rid];
+  if(!r){ showToast('❌ Rapport introuvable'); return; }
+  var deps = r.deps || [];
+  var h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:.8rem;">';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:var(--or3);">✏️ Modifier le rapport</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">'+r.villa+' · '+r.mois+'</div>';
+  h+='</div>';
+
+  // Revenus
+  h+='<div style="font-size:.63rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Revenus</div>';
+  h+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;">';
+  h+='<span style="font-size:.82rem;color:var(--blanc);flex:1;">Total revenus</span>';
+  h+='<input class="form-input" type="number" id="edit-rev" value="'+(r.rev||0)+'" style="flex:1;text-align:right;" inputmode="numeric"/>';
+  h+='<span style="color:var(--or3);font-weight:700;font-size:.8rem;">฿</span>';
+  h+='</div>';
+
+  // Commission
+  h+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;">';
+  h+='<span style="font-size:.82rem;color:var(--or3);flex:1;font-weight:600;">Commission</span>';
+  h+='<input class="form-input" type="number" id="edit-cp" value="'+(r.cp||20)+'" style="flex:1;text-align:right;" inputmode="numeric"/>';
+  h+='<span style="color:var(--or3);font-weight:700;font-size:.8rem;">%</span>';
+  h+='</div>';
+
+  // Dépenses existantes
+  h+='<div style="font-size:.63rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Dépenses</div>';
+  h+='<div id="edit-deps">';
+  deps.forEach(function(d, i){
+    h+='<div class="edit-dep-row" style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem;" data-idx="'+i+'">';
+    h+='<input class="form-input" id="ed-name-'+i+'" value="'+escHtml(d.n)+'" style="flex:1.5;font-size:.8rem;" />';
+    h+='<input class="form-input" type="number" id="ed-val-'+i+'" value="'+(d.v||0)+'" style="flex:1;text-align:right;" inputmode="numeric"/>';
+    h+='<span style="color:var(--or3);font-size:.75rem;min-width:14px;">฿</span>';
+    h+='<button onclick="this.parentNode.remove()" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:6px;padding:.35rem .5rem;cursor:pointer;font-size:.75rem;">✕</button>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<button class="add-btn" onclick="addEditDepLine()" style="margin-bottom:.8rem;font-size:.75rem;">＋ Ajouter une dépense</button>';
+
+  h+='<button class="save-btn" onclick="saveEditReport(\''+rid+'\')">✓ Enregistrer les modifications</button>';
+  h+='<button class="cancel-btn" onclick="openReportAction(\''+rid+'\')">Retour</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  window._editDepCount = deps.length;
+}
+
+function addEditDepLine(){
+  window._editDepCount = (window._editDepCount||0)+1;
+  var i = window._editDepCount;
+  var row = document.createElement('div');
+  row.className = 'edit-dep-row';
+  row.style.cssText = 'display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem;';
+  row.innerHTML = '<input class="form-input" id="ed-name-'+i+'" placeholder="Description" style="flex:1.5;font-size:.8rem;" />'
+    +'<input class="form-input" type="number" id="ed-val-'+i+'" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+    +'<span style="color:var(--or3);font-size:.75rem;min-width:14px;">฿</span>'
+    +'<button onclick="this.parentNode.remove()" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:6px;padding:.35rem .5rem;cursor:pointer;font-size:.75rem;">✕</button>';
+  document.getElementById('edit-deps').appendChild(row);
+}
+
+function saveEditReport(rid){
+  var r = window._rapports && window._rapports[rid];
+  if(!r){ showToast('❌ Rapport introuvable'); return; }
+  var newRev = parseFloat(document.getElementById('edit-rev').value)||0;
+  var newCp = parseFloat(document.getElementById('edit-cp').value)||20;
+  var newDeps = [];
+  document.querySelectorAll('#edit-deps .edit-dep-row').forEach(function(row){
+    var nameInput = row.querySelector('input[id^="ed-name-"]');
+    var valInput = row.querySelector('input[id^="ed-val-"]');
+    var n = nameInput ? nameInput.value.trim() : '';
+    var v = valInput ? parseFloat(valInput.value)||0 : 0;
+    if(n && v>0) newDeps.push({n:n, v:v});
+  });
+  var totalDep = newDeps.reduce(function(s,d){return s+d.v;},0);
+  var com = Math.round(newRev * newCp / 100);
+  var net = newRev - totalDep - com;
+
+  // Mettre à jour le rapport
+  r.rev = newRev;
+  r.cp = newCp;
+  r.deps = newDeps;
+  r.totalDep = totalDep;
+  r.com = com;
+  r.net = net;
+
+  // Mettre à jour dans l'historique du client
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(cid && CLIENTS[cid] && CLIENTS[cid].history){
+    var found = CLIENTS[cid].history.find(function(h){ return h.name===r.villa && h.period===r.mois; });
+    if(found){
+      found.rev = newRev;
+      found.dep = totalDep;
+      found.com = com;
+      found.net = net;
+      found.pos = net >= 0;
+      found.details = {villa:r.villa, mois:r.mois, rev:newRev, deps:newDeps, totalDep:totalDep, cp:newCp, com:com, net:net, client:r.client};
+    }
+  }
+
+  // Mettre à jour la villa correspondante
+  if(CU.villas){
+    var villa = CU.villas.find(function(v){ return v.name===r.villa; });
+    if(villa){
+      villa.rev = newRev;
+      villa.dep = newDeps.filter(function(d){ return !['Pisciniste','Jardinier','Internet'].includes(d.n); }).reduce(function(s,d){return s+d.v;},0);
+      villa.chg = newDeps.filter(function(d){ return ['Pisciniste','Jardinier','Internet'].includes(d.n); }).reduce(function(s,d){return s+d.v;},0);
+      villa.net = net;
+      villa.com = com;
+      villa.comPct = newCp;
+      villa.pos = net >= 0;
+    }
+  }
+
+  // Sauvegarder
+  if(cid && CLIENTS[cid]){
+    CLIENTS[cid].villas = CU.villas;
+    save('clients', CLIENTS);
+  }
+
+  closeMov();
+  if(CU.role==='admin') buildAdmin(); else buildClient();
+  showToast('✅ Rapport modifié avec succès');
 }
 
 // ══ NAVIGATION ══
