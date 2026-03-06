@@ -1936,10 +1936,24 @@ function buildCard(r){
   var nc=r.net>=0?'#4ade80':'#f87171';
   var ns=(r.net>=0?'+':'')+fmt(r.net);
   var rows='';
-  if(r.rev>0) rows+='<div class="rr"><span>Revenus totaux</span><span>'+fmt(r.rev)+'</span></div>';
+
+  // Détail des sources de revenus
+  var sources = r.revSources || [];
+  if(sources.length > 0){
+    rows+='<div style="font-size:.6rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;margin-top:.3rem;">Détail des revenus</div>';
+    sources.forEach(function(s){
+      rows+='<div class="rr" style="font-size:.75rem;"><span style="color:var(--gris);">'+(s.platform||'Direct')+' · '+s.from+' → '+s.to+(s.guest?' · '+s.guest:'')+'</span><span style="color:#4ade80;">'+fmt(s.amount)+'</span></div>';
+    });
+    rows+='<div class="rr" style="border-top:1px solid var(--gris2);padding-top:.3rem;"><span><strong>Total revenus</strong></span><span><strong>'+fmt(r.rev)+'</strong></span></div>';
+  } else {
+    if(r.rev>0) rows+='<div class="rr"><span>Revenus totaux</span><span>'+fmt(r.rev)+'</span></div>';
+  }
+
+  // Dépenses
+  if(r.deps.length>0) rows+='<div style="font-size:.6rem;color:var(--gris);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;margin-top:.5rem;">Charges</div>';
   r.deps.forEach(function(d){rows+='<div class="rr"><span>'+d.n.charAt(0).toUpperCase()+d.n.slice(1)+'</span><span class="rn">−'+fmt(d.v)+'</span></div>';});
   if(r.com>0) rows+='<div class="rr"><span>Commission '+r.cp+'%</span><span class="rn">−'+fmt(r.com)+'</span></div>';
-  rows+='<div class="rr"><span>'+(r.net>=0?'BÉNÉFICE NET':'DÉFICIT NET')+'</span><span style="color:'+nc+'">'+ns+'</span></div>';
+  rows+='<div class="rr" style="border-top:1px solid var(--gris2);padding-top:.3rem;margin-top:.3rem;"><span><strong>'+(r.net>=0?'BÉNÉFICE NET':'DÉFICIT NET')+'</strong></span><span style="color:'+nc+';font-weight:700;">'+ns+'</span></div>';
   var rid='rpt_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
   window._rapports = window._rapports||{};
   window._rapports[rid] = r;
@@ -2124,6 +2138,31 @@ function submitDeclaration(){
     const com = Math.round(rev * cp / 100);
     const net = rev - totalDep - com;
 
+    // ── Collecter les sources de revenus pour le rapport ──
+    var revSources = [];
+    // Réservations Airbnb du mois
+    var MOIS_NOMS_DECL=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    var moisIdx = MOIS_NOMS_DECL.indexOf(mois);
+    var airbnbResas = (v.reservations||[]).filter(function(r){
+      var d = new Date(r.checkin);
+      return d.getMonth()===moisIdx && d.getFullYear()===parseInt(annee);
+    });
+    airbnbResas.forEach(function(r){
+      var ci = new Date(r.checkin).toLocaleDateString('fr-FR');
+      var co = new Date(r.checkout).toLocaleDateString('fr-FR');
+      revSources.push({type:'reservation', platform:r.source||'Airbnb', from:ci, to:co, guest:r.guest||'', amount:r.amount||0, nights:r.nights||0});
+    });
+    // Locations manuelles du mois
+    var monthLocs = (v.locations||[]).filter(function(loc){
+      var d = new Date(loc.from);
+      return d.getMonth()===moisIdx && d.getFullYear()===parseInt(annee);
+    });
+    monthLocs.forEach(function(loc){
+      var ci = new Date(loc.from).toLocaleDateString('fr-FR');
+      var co = new Date(loc.to).toLocaleDateString('fr-FR');
+      revSources.push({type:'location', platform:loc.platform||'Direct', from:ci, to:co, guest:loc.note||'', amount:loc.amount||0});
+    });
+
     // ── Mettre à jour les propriétés de la villa pour le dashboard ──
     v.rev = rev;
     v.dep = varDeps.reduce(function(s,d){return s+d.v;},0);
@@ -2134,7 +2173,7 @@ function submitDeclaration(){
     v.period = periode;
     v.pos = net >= 0;
 
-    const r = {villa:v.name, mois:periode, rev:rev, deps:allDeps, totalDep:totalDep, cp:cp, com:com, net:net, client:CU?CU.name:''};
+    const r = {villa:v.name, mois:periode, rev:rev, revSources:revSources, revAirbnb:air, revBooking:bk, revExtra:extra, deps:allDeps, totalDep:totalDep, cp:cp, com:com, net:net, client:CU?CU.name:''};
     allReports.push(r);
     addToHistory(r);
   });
@@ -2188,14 +2227,18 @@ function addToHistory(r){
     date: new Date().toLocaleDateString('fr-FR')
   };
   if(!CLIENTS[cid].history) CLIENTS[cid].history=[];
-  // Éviter doublons (même villa + même mois)
-  const exists = CLIENTS[cid].history.find(function(h){ return h.name===r.villa && h.period===r.mois; });
-  if(!exists){
+  // Si le rapport existe déjà (même villa + même mois), le mettre à jour
+  var existIdx = CLIENTS[cid].history.findIndex(function(h){ return h.name===r.villa && h.period===r.mois; });
+  if(existIdx >= 0){
+    CLIENTS[cid].history[existIdx] = entry;
+    save('clients', CLIENTS);
+    CU = {...CLIENTS[cid], id:cid};
+    buildClient();
+    showToast('📋 Rapport mis à jour !');
+  } else {
     CLIENTS[cid].history.unshift(entry);
     save('clients', CLIENTS);
-    // Recharger CU avec les nouvelles données
     CU = {...CLIENTS[cid], id:cid};
-    // Reconstruire l'interface
     buildClient();
     showToast('📋 Rapport ajouté à l\'historique !');
   }
@@ -2366,7 +2409,17 @@ function genPDF(btn, rid){
 
     // Revenus
     y = sectionTitle('Revenus', y);
-    tableRow('Airbnb, Booking, Location', fmtPDFb(r.rev||0), false, BLANC, OR3);
+    var pdfSources = r.revSources || [];
+    if(pdfSources.length > 0){
+      pdfSources.forEach(function(s){
+        var srcLabel = (s.platform||'Direct')+' · '+s.from+' → '+s.to;
+        if(s.guest) srcLabel += ' ('+s.guest+')';
+        tableRow(srcLabel, fmtPDFb(s.amount||0), false, GRIS, VERT);
+      });
+      tableRow('Total revenus', fmtPDFb(r.rev||0), true, BLANC, OR3, NOIR3);
+    } else {
+      tableRow('Airbnb, Booking, Location', fmtPDFb(r.rev||0), false, BLANC, OR3);
+    }
 
     // Séparation charges fixes / variables
     var PDF_FIXES = ['pisciniste','jardinier','internet'];
@@ -2939,6 +2992,7 @@ function buildRapportFromHistory(x){
     villa  : x.name   || details.villa   || 'Villa',
     mois   : x.period || details.mois    || '',
     rev    : x.rev    || details.rev     || 0,
+    revSources: details.revSources || [],
     deps   : details.deps || [],
     totalDep: x.dep   || details.totalDep|| 0,
     cp     : x.com && x.rev ? Math.round(x.com/x.rev*100) : (details.cp||20),
