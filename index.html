@@ -717,17 +717,23 @@ function buildClient(){
     <div class="kc"><div class="kl">Revenus ${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]}</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
     <div class="kc"><div class="kl">Bénéfice net</div><div class="kv">${fmt(totalNet)}</div><div class="kd ${totalNet>0?'up':''}">${u.villas.length} villa${u.villas.length>1?'s':''}</div></div>
   </div>
-  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div><div class="kl">💰 Commissions générées</div><div class="kv">${fmt(totalCom)}</div><div class="kd up">${comPct}% des revenus bruts</div></div>
-      <div style="text-align:right;">
-        <div style="font-size:.6rem;color:var(--gris);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem;">Détail par villa</div>
-        ${u.villas.map(v=>`<div style="font-size:.72rem;color:var(--gris);margin-bottom:2px;">${v.name} <span style="color:var(--or3);font-weight:600">${fmt(v.com)}</span></div>`).join('')}
-      </div>
+  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);padding:.9rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><div class="kl">💰 Commissions générées</div><div class="kv">${fmt(totalCom)}</div><div class="kd up">${totalRev>0?comPct+'% des revenus bruts':'Aucune déclaration'}</div></div>
     </div>
     <div style="margin-top:.6rem;height:4px;background:var(--gris2);border-radius:2px;overflow:hidden;">
       <div style="height:100%;width:${comPct}%;background:linear-gradient(90deg,var(--or),var(--or3));border-radius:2px;"></div>
     </div>
+    ${u.villas.length>0?`<div style="margin-top:.7rem;padding-top:.6rem;border-top:1px solid rgba(201,149,12,.15);">
+      <div style="font-size:.6rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem;">Détail par villa</div>
+      ${u.villas.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.3rem .4rem;margin-bottom:.25rem;background:rgba(255,255,255,.03);border-radius:5px;">
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span style="font-size:.72rem;color:var(--blanc);font-weight:500;">🏠 ${v.name}</span>
+          <span style="font-size:.6rem;color:var(--gris);">${v.comPct||20}%</span>
+        </div>
+        <span style="font-size:.78rem;color:var(--or3);font-weight:700;">${fmt(v.com||0)}</span>
+      </div>`).join('')}
+    </div>`:''}
   </div>
   <div class="qb" onclick="openDeclaration()" style="border-color:rgba(201,149,12,.5);background:rgba(201,149,12,.07);"><div class="qi">📋</div><div class="qt"><strong>Déclarer ce mois</strong><small>Formulaire guidé — rapide et simple</small></div><div class="qa">›</div></div>
   <div class="qb" onclick="openDivers()" style="border-color:rgba(124,58,237,.35);background:rgba(124,58,237,.05);"><div class="qi" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">⚡</div><div class="qt"><strong>Dépenses diverses</strong><small>Ajouter une dépense imprévue</small></div><div class="qa">›</div></div>
@@ -1974,10 +1980,27 @@ function submitDeclaration(){
     const com = Math.round(rev * cp / 100);
     const net = rev - totalDep - com;
 
+    // ── Mettre à jour les propriétés de la villa pour le dashboard ──
+    v.rev = rev;
+    v.dep = varDeps.reduce(function(s,d){return s+d.v;},0);
+    v.chg = fixedDeps.reduce(function(s,d){return s+d.v;},0);
+    v.net = net;
+    v.com = com;
+    v.comPct = cp;
+    v.period = periode;
+    v.pos = net >= 0;
+
     const r = {villa:v.name, mois:periode, rev:rev, deps:allDeps, totalDep:totalDep, cp:cp, com:com, net:net, client:CU?CU.name:''};
     allReports.push(r);
     addToHistory(r);
   });
+
+  // ── Sauvegarder les villas mises à jour dans CLIENTS ──
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(cid && CLIENTS[cid]){
+    CLIENTS[cid].villas = CU.villas;
+    save('clients', CLIENTS);
+  }
 
   if(allReports.length===0){
     showToast('⚠️ Aucun revenu déclaré — remplissez au moins Airbnb ou Booking');
