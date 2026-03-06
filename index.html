@@ -329,6 +329,8 @@ function pdel(){pin=pin.slice(0,-1);updDots();}
 function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.className='dot'+(i<pin.length?' on':'');}}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -362,6 +364,7 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
   <div class="tb">
     <div class="tl">ACS</div>
     <div class="tr">
+      <div id="conn-status" style="width:8px;height:8px;border-radius:50%;background:var(--gris3);flex-shrink:0;" title="Statut connexion"></div>
       <button class="nb" onclick="showToast('Aucune nouvelle notification')">🔔<span class="nd"></span></button>
       <div class="av" id="topav" onclick="goPage('profil')">?</div>
     </div>
@@ -386,80 +389,213 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
 <div class="toast" id="toastel"></div>
 
 <script>
-// ══ STORAGE (localStorage + IndexedDB pour persistance long terme) ══
-function save(k,v){
-  try{localStorage.setItem('acs_'+k,JSON.stringify(v));}catch(e){}
-  idbSave(k,v);
-}
-function load(k,def){try{const v=localStorage.getItem('acs_'+k);return v?JSON.parse(v):def;}catch(e){return def;}}
+// ═══════════════════════════════════════════════════════════════════
+// ══ FIREBASE — CONFIGURATION                                    ══
+// ═══════════════════════════════════════════════════════════════════
+// ⚠️ INSTRUCTIONS POUR ACTIVER LA SYNCHRONISATION TEMPS RÉEL :
+// 1. Allez sur https://console.firebase.google.com
+// 2. Créez un nouveau projet (gratuit)
+// 3. Allez dans "Realtime Database" → "Créer une base de données"
+// 4. Choisissez le mode TEST pour commencer
+// 5. Allez dans Paramètres du projet (⚙️) → "Ajouter une application" → Web
+// 6. Copiez les valeurs de votre config ci-dessous
+// ═══════════════════════════════════════════════════════════════════
+// 7. Règles de sécurité recommandées pour votre Realtime Database :
+//    {
+//      "rules": {
+//        "data": {
+//          ".read": true,
+//          ".write": true
+//        }
+//      }
+//    }
+//    ⚠️ En production, restreignez l'accès avec Firebase Auth
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
 
-// ── IndexedDB pour stockage long terme ──
-var _idb=null;
-function idbOpen(){
-  return new Promise(function(ok,fail){
-    if(_idb){ok(_idb);return;}
-    var req=indexedDB.open('ACS_DB',1);
-    req.onupgradeneeded=function(e){
-      var db=e.target.result;
-      if(!db.objectStoreNames.contains('store')) db.createObjectStore('store');
-    };
-    req.onsuccess=function(e){_idb=e.target.result;ok(_idb);};
-    req.onerror=function(){fail();};
+// ══ FIREBASE INIT ══
+var _fbdb = null;
+var _fbConnected = false;
+var _fbReady = false;
+var _fbListeners = {};
+var _fbSyncCallbacks = [];
+
+function fbInit() {
+  if (!FIREBASE_CONFIG.databaseURL || !FIREBASE_CONFIG.apiKey) {
+    console.warn('[ACS] Firebase non configuré — mode localStorage uniquement');
+    return false;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    _fbdb = firebase.database();
+    _fbdb.ref('.info/connected').on('value', function(snap) {
+      _fbConnected = snap.val() === true;
+      updateConnectionUI();
+    });
+    _fbReady = true;
+    console.log('[ACS] Firebase initialisé');
+    return true;
+  } catch(e) {
+    console.error('[ACS] Firebase init error:', e);
+    return false;
+  }
+}
+
+// ══ STORAGE — Firebase (source de vérité) + localStorage (cache offline) ══
+function save(k, v) {
+  // 1. Cache local immédiat
+  try { localStorage.setItem('acs_' + k, JSON.stringify(v)); } catch(e) {}
+  // 2. Écriture Firebase (sync cross-device)
+  if (_fbdb) {
+    _fbdb.ref('data/' + k).set(v).catch(function(e) {
+      console.warn('[ACS] Firebase write error on ' + k + ':', e);
+    });
+  }
+}
+
+function load(k, def) {
+  try {
+    var v = localStorage.getItem('acs_' + k);
+    return v ? JSON.parse(v) : def;
+  } catch(e) { return def; }
+}
+
+// Charger depuis Firebase (async, pour validation login etc.)
+function fbLoad(k) {
+  if (!_fbdb) return Promise.resolve(undefined);
+  return _fbdb.ref('data/' + k).once('value').then(function(snap) {
+    var val = snap.val();
+    if (val !== null && val !== undefined) {
+      try { localStorage.setItem('acs_' + k, JSON.stringify(val)); } catch(e) {}
+    }
+    return val;
+  }).catch(function(e) {
+    console.warn('[ACS] Firebase read error:', e);
+    return undefined;
   });
 }
-function idbSave(k,v){
-  idbOpen().then(function(db){
-    var tx=db.transaction('store','readwrite');
-    tx.objectStore('store').put(v,k);
-  }).catch(function(){});
-}
-function idbLoad(k){
-  return idbOpen().then(function(db){
-    return new Promise(function(ok){
-      var tx=db.transaction('store','readonly');
-      var req=tx.objectStore('store').get(k);
-      req.onsuccess=function(){ok(req.result);};
-      req.onerror=function(){ok(undefined);};
-    });
-  }).catch(function(){return undefined;});
-}
-// Restaurer depuis IDB si localStorage est vide (ex: données effacées)
-function idbRestore(){
-  return idbOpen().then(function(db){
-    return new Promise(function(ok){
-      var tx=db.transaction('store','readonly');
-      var req=tx.objectStore('store').getAll();
-      var reqKeys=tx.objectStore('store').getAllKeys();
-      var vals,keys;
-      req.onsuccess=function(){vals=req.result;if(keys)done();};
-      reqKeys.onsuccess=function(){keys=reqKeys.result;if(vals)done();};
-      function done(){
-        var restored=0;
-        for(var i=0;i<keys.length;i++){
-          var lk='acs_'+keys[i];
-          if(!localStorage.getItem(lk)){
-            try{localStorage.setItem(lk,JSON.stringify(vals[i]));restored++;}catch(e){}
-          }
-        }
-        if(restored>0) console.log('[ACS] Restauré '+restored+' entrées depuis IndexedDB');
-        ok(restored);
+
+// Synchronisation initiale : Firebase → localStorage
+function fbSyncAll() {
+  if (!_fbdb) return Promise.resolve();
+  return _fbdb.ref('data').once('value').then(function(snap) {
+    var data = snap.val();
+    if (!data) {
+      // Premier lancement : pousser les données locales vers Firebase
+      var clients = load('clients', {});
+      var messages = load('messages', []);
+      var friends = load('friends', {});
+      var pushData = {};
+      if (Object.keys(clients).length > 0) pushData['data/clients'] = clients;
+      if (messages.length > 0) pushData['data/messages'] = messages;
+      if (Object.keys(friends).length > 0) pushData['data/friends'] = friends;
+      if (Object.keys(pushData).length > 0) {
+        return _fbdb.ref().update(pushData).then(function() {
+          console.log('[ACS] Données locales poussées vers Firebase');
+        });
       }
-      req.onerror=function(){ok(0);};
-    });
-  }).catch(function(){return 0;});
+    } else {
+      // Sync Firebase → local
+      Object.keys(data).forEach(function(k) {
+        try { localStorage.setItem('acs_' + k, JSON.stringify(data[k])); } catch(e) {}
+      });
+      console.log('[ACS] Données Firebase synchronisées localement');
+    }
+  }).catch(function(e) {
+    console.warn('[ACS] Sync initial error:', e);
+  });
 }
-// Lancer restauration au démarrage
-idbRestore().then(function(n){
-  if(n>0){
-    CLIENTS=load('clients',DEFAULT_CLIENTS);
+
+// Listeners temps réel — met à jour localStorage + UI automatiquement
+function fbStartListeners() {
+  if (!_fbdb) return;
+
+  // Listener sur les clients
+  _fbdb.ref('data/clients').on('value', function(snap) {
+    var val = snap.val();
+    if (val === null) val = {};
+    try { localStorage.setItem('acs_clients', JSON.stringify(val)); } catch(e) {}
+    CLIENTS = val;
+
+    // Si utilisateur connecté, vérifier qu'il existe toujours
+    if (CU && CU.role !== 'admin' && CU.id) {
+      if (!CLIENTS[CU.id]) {
+        // Client supprimé → déconnexion forcée
+        showToast('⚠️ Votre compte a été supprimé par l\'administrateur');
+        setTimeout(doLogout, 2000);
+        return;
+      }
+      // Mettre à jour les données de l'utilisateur connecté
+      CU = Object.assign({}, CLIENTS[CU.id], {id: CU.id});
+    }
+
+    // Rafraîchir l'interface si connecté
+    if (CU) {
+      if (CU.role === 'admin') buildAdmin();
+      else buildClient();
+      buildProfile();
+    }
+  });
+
+  // Listener sur les messages
+  _fbdb.ref('data/messages').on('value', function(snap) {
+    var val = snap.val();
+    if (val === null) val = [];
+    // Firebase peut transformer les arrays en objects — reconvertir
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      val = Object.values(val);
+    }
+    try { localStorage.setItem('acs_messages', JSON.stringify(val)); } catch(e) {}
+    // Rafraîchir les threads
+    if (CU) buildThreads();
+  });
+
+  // Listener sur les amis
+  _fbdb.ref('data/friends').on('value', function(snap) {
+    var val = snap.val();
+    if (val === null) val = {};
+    try { localStorage.setItem('acs_friends', JSON.stringify(val)); } catch(e) {}
+    if (CU) buildThreads();
+  });
+}
+
+// Indicateur de connexion dans le topbar
+function updateConnectionUI() {
+  var el = document.getElementById('conn-status');
+  if (!el) return;
+  if (_fbConnected) {
+    el.style.background = '#4ade80';
+    el.title = 'Connecté — synchronisé';
+  } else if (_fbReady) {
+    el.style.background = '#f87171';
+    el.title = 'Hors-ligne — modifications locales';
+  } else {
+    el.style.background = 'var(--gris3)';
+    el.title = 'Firebase non configuré';
   }
-});
+}
 
 // ══ DEFAULT DATA ══
 const DEFAULT_CLIENTS = {};
 
 // Load or init clients
 let CLIENTS = load('clients', DEFAULT_CLIENTS);
+
+// Initialiser Firebase au chargement
+fbInit();
+// Sync initiale (non bloquante)
+if (_fbReady) {
+  fbSyncAll().then(function() {
+    CLIENTS = load('clients', DEFAULT_CLIENTS);
+  });
+}
 
 // Plusieurs comptes admin — clé = identifiant de connexion
 const ADMINS = {
@@ -473,9 +609,18 @@ let CU=null;
 
 // ══ PIN ══
 // pk, pdel, updDots déclarés en haut du document
+var _loginAttempts = 0;
+var _loginLockUntil = 0;
+
 function tryLogin(){
-  // Toujours recharger depuis localStorage (multi-device safe)
-  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  // Rate limiting — protection brute force
+  if (Date.now() < _loginLockUntil) {
+    var _remaining = Math.ceil((_loginLockUntil - Date.now()) / 1000);
+    showToast('🔒 Trop de tentatives. Réessayez dans ' + _remaining + 's');
+    pin = ''; updDots();
+    return;
+  }
+
   const id=document.getElementById('lid').value.trim().toLowerCase();
   if(!id){
     for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot err';
@@ -483,33 +628,55 @@ function tryLogin(){
     setTimeout(()=>{pin='';updDots();document.getElementById('pgrid').classList.remove('shake');},500);
     return;
   }
-  let user=null;
-  if(ADMINS[id] && ADMINS[id].pin===String(pin)){user={...ADMINS[id],id};}
-  else if(CLIENTS[id]&&CLIENTS[id].pin===String(pin)){user={...CLIENTS[id],id};}
-  if(user){
-    for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot ok';
-    // Sauvegarder identifiant + session
-    try{
-      localStorage.setItem('acs_last_id', id);
-      sessionStorage.setItem('acs_session', id); // session active
-    }catch(e){}
-    setTimeout(()=>{
-      CU=user;
-      // Email : on vérifie si déjà renseigné OU déjà vu
-      const _emailDone = localStorage.getItem('acs_email_done_'+id);
-      const _emailVal  = localStorage.getItem('acs_email_'+id) || (CLIENTS[id]&&CLIENTS[id].email);
-      if(!_emailDone && !_emailVal && user.role !== 'admin') {
-        showEmailCapture(id, user);
-      } else {
-        // Marquer comme fait si email déjà connu
-        if(_emailVal && !_emailDone) localStorage.setItem('acs_email_done_'+id,'1');
-        initApp();
+
+  // Fonction interne qui fait le login une fois les données prêtes
+  function doLoginCheck(clientsData) {
+    CLIENTS = clientsData || {};
+    let user=null;
+    if(ADMINS[id] && ADMINS[id].pin===String(pin)){user={...ADMINS[id],id};}
+    else if(CLIENTS[id]&&CLIENTS[id].pin===String(pin)){user={...CLIENTS[id],id};}
+    if(user){
+      _loginAttempts = 0; // Reset on success
+      for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot ok';
+      try{
+        localStorage.setItem('acs_last_id', id);
+        sessionStorage.setItem('acs_session', id);
+      }catch(e){}
+      setTimeout(()=>{
+        CU=user;
+        const _emailDone = localStorage.getItem('acs_email_done_'+id);
+        const _emailVal  = localStorage.getItem('acs_email_'+id) || (CLIENTS[id]&&CLIENTS[id].email);
+        if(!_emailDone && !_emailVal && user.role !== 'admin') {
+          showEmailCapture(id, user);
+        } else {
+          if(_emailVal && !_emailDone) localStorage.setItem('acs_email_done_'+id,'1');
+          initApp();
+        }
+      },380);
+    }else{
+      // Échec login
+      _loginAttempts++;
+      if (_loginAttempts >= 5) {
+        _loginLockUntil = Date.now() + 300000; // Blocage 5 min
+        _loginAttempts = 0;
+        showToast('🔒 5 tentatives échouées — bloqué 5 minutes');
       }
-    },380);
-  }else{
-    for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot err';
-    document.getElementById('pgrid').classList.add('shake');
-    setTimeout(()=>{pin='';updDots();document.getElementById('pgrid').classList.remove('shake');},500);
+      for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot err';
+      document.getElementById('pgrid').classList.add('shake');
+      setTimeout(()=>{pin='';updDots();document.getElementById('pgrid').classList.remove('shake');},500);
+    }
+  }
+
+  // Si Firebase est prêt, charger les données depuis Firebase (source de vérité)
+  if (_fbdb) {
+    fbLoad('clients').then(function(fbClients) {
+      doLoginCheck(fbClients || load('clients', DEFAULT_CLIENTS));
+    }).catch(function() {
+      doLoginCheck(load('clients', DEFAULT_CLIENTS));
+    });
+  } else {
+    // Mode offline — utiliser localStorage
+    doLoginCheck(load('clients', DEFAULT_CLIENTS));
   }
 }
 document.getElementById('lid').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lid').blur();});
@@ -523,6 +690,9 @@ function initApp(){
   const av=document.getElementById('topav');
   av.textContent=CU.initials;
   av.className=CU.role==='admin'?'av adm':'av';
+  // Démarrer les listeners temps réel Firebase
+  fbStartListeners();
+  updateConnectionUI();
   CU.role==='admin'?buildAdmin():buildClient();
   buildProfile();buildThreads();
   goPage('dash');
@@ -541,7 +711,7 @@ function buildClient(){
   const comPct=totalRev>0?Math.round(totalCom/totalRev*100):0;
   const _moisNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const _curPeriod=_moisNoms[new Date().getMonth()]+' '+new Date().getFullYear();
-  let h=`<div class="h1">Bonjour, ${u.name.split(' ')[0]} 👋</div>
+  let h=`<div class="h1">Bonjour, ${escHtml(u.name.split(' ')[0])} 👋</div>
   <div class="sub">${_curPeriod} · ${u.villas.length} villa${u.villas.length>1?'s':''}</div>
   <div class="kr">
     <div class="kc"><div class="kl">Revenus ${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]}</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
@@ -1035,9 +1205,21 @@ function doDelete(id){
   const name=CLIENTS[id]?CLIENTS[id].name:'';
   delete CLIENTS[id];
   save('clients',CLIENTS);
+  // Nettoyer les données associées (amis, messages)
+  var friends = load('friends', {});
+  if (friends[id]) {
+    // Retirer cet utilisateur des listes d'amis de ses contacts
+    (friends[id] || []).forEach(function(fid) {
+      if (friends[fid]) {
+        friends[fid] = friends[fid].filter(function(f) { return f !== id; });
+      }
+    });
+    delete friends[id];
+    save('friends', friends);
+  }
   closeMov();
   buildAdmin();
-  showToast(`🗑 ${name} supprimé`);
+  showToast('🗑 ' + name + ' supprimé — déconnexion forcée sur tous ses appareils');
 }
 
 // ══ GESTION ABONNEMENT ══
@@ -1455,7 +1637,8 @@ function deleteVilla(btn, id){
     save('clients', CLIENTS);
   }
   closeMov();
-  buildClient();
+  if (CU.role === 'admin') buildAdmin();
+  else buildClient();
   showToast('✅ Villa supprimée');
 }
 
@@ -1762,7 +1945,6 @@ function submitDeclaration(){
   });
 
   closeMov();
-  goPage('chat');
 
   const allReports = [];
 
@@ -2373,19 +2555,20 @@ function genRapportAnnuelPDF(year){
 // ══ MESSAGERIE INTERNE ══
 function getMessages(){
   var msgs = load('messages', []);
-  // Auto-suppression après 24h — archiver dans IDB puis nettoyer
+  // S'assurer que c'est un array (Firebase peut transformer en objet)
+  if (msgs && typeof msgs === 'object' && !Array.isArray(msgs)) {
+    msgs = Object.values(msgs);
+  }
+  if (!Array.isArray(msgs)) msgs = [];
+  // Auto-suppression après 30 jours (au lieu de 24h) pour garder l'historique
   var now24 = Date.now();
   var expired = [];
   var kept = [];
   msgs.forEach(function(m){
-    if(m.ts && (now24 - m.ts) > 86400000){ expired.push(m); }
+    if(m.ts && (now24 - m.ts) > 30 * 86400000){ expired.push(m); }
     else { kept.push(m); }
   });
   if(expired.length > 0){
-    // Archiver les messages expirés dans IDB
-    var archives = load('msg_archives', []);
-    archives = archives.concat(expired);
-    save('msg_archives', archives);
     save('messages', kept);
     return kept;
   }
@@ -2449,7 +2632,7 @@ function openConvWith(name, targetId){
       var isMine = m.from === myId;
       h+='<div style="display:flex;justify-content:'+(isMine?'flex-end':'flex-start')+';margin-bottom:.5rem;">';
       h+='<div style="max-width:80%;padding:.55rem .8rem;border-radius:'+(isMine?'10px 10px 2px 10px':'10px 10px 10px 2px')+';background:'+(isMine?'linear-gradient(135deg,rgba(201,149,12,.15),rgba(201,149,12,.08))':'var(--noir3)')+';border:1px solid '+(isMine?'rgba(201,149,12,.3)':'var(--gris2)')+';font-size:.82rem;line-height:1.45;">';
-      h+='<div>'+m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+      h+='<div>'+escHtml(m.text)+'</div>';
       h+='<div style="font-size:.58rem;color:var(--gris);margin-top:.25rem;text-align:right;">'+m.time+'</div>';
       h+='</div></div>';
     });
@@ -2643,6 +2826,17 @@ function closeMov(e){if(!e||e.target.id==='modal')document.getElementById('modal
 function doLogout(){try{sessionStorage.removeItem('acs_session');}catch(e){}CU=null;pin='';fcpin='';document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active');document.getElementById('lid').value='';updDots();}
 
 // ══ UTILS ══
+// ══ SANITISATION XSS ══
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function fmt(v){
   const n = Math.abs(Math.round(v||0));
   return n.toLocaleString('fr-FR')+' ฿';
@@ -2837,25 +3031,48 @@ function testNotif(){
   try {
     const sid = sessionStorage.getItem('acs_session');
     if(!sid) return;
-    // Recharger CLIENTS en cas de modifs
-    CLIENTS = load('clients', DEFAULT_CLIENTS);
-    let user = null;
-    if(ADMINS[sid]) user = {...ADMINS[sid], id:sid};
-    else if(CLIENTS[sid]) user = {...CLIENTS[sid], id:sid};
-    if(user) {
-      CU = user;
-      // Marquer email comme fait pour éviter la reprompt au refresh
-      if(sid !== 'admin') localStorage.setItem('acs_email_done_'+sid,'1');
-      document.addEventListener('DOMContentLoaded', function(){
-        document.getElementById('login').classList.remove('active');
-        document.getElementById('app').classList.add('active');
-        const av = document.getElementById('topav');
-        av.textContent = CU.initials;
-        av.className = CU.role==='admin' ? 'av adm' : 'av';
-        if(CU.role==='admin'){ buildAdmin(); goPage('dash'); }
-        else { buildClient(); initNotifications(); goPage('dash'); }
-        buildProfile(); buildThreads();
+
+    function restoreWithData(clientsData) {
+      CLIENTS = clientsData || {};
+      let user = null;
+      if(ADMINS[sid]) user = {...ADMINS[sid], id:sid};
+      else if(CLIENTS[sid]) user = {...CLIENTS[sid], id:sid};
+      if(user) {
+        CU = user;
+        if(sid !== 'admin' && !ADMINS[sid]) localStorage.setItem('acs_email_done_'+sid,'1');
+        // Attendre le DOM si nécessaire
+        function doRestore() {
+          document.getElementById('login').classList.remove('active');
+          document.getElementById('app').classList.add('active');
+          const av = document.getElementById('topav');
+          av.textContent = CU.initials;
+          av.className = CU.role==='admin' ? 'av adm' : 'av';
+          fbStartListeners();
+          updateConnectionUI();
+          if(CU.role==='admin'){ buildAdmin(); goPage('dash'); }
+          else { buildClient(); initNotifications(); goPage('dash'); }
+          buildProfile(); buildThreads();
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', doRestore);
+        } else {
+          doRestore();
+        }
+      } else if (!ADMINS[sid]) {
+        // Le client n'existe plus — session invalide, forcer logout
+        try { sessionStorage.removeItem('acs_session'); } catch(e) {}
+      }
+    }
+
+    // Essayer Firebase d'abord pour avoir les données les plus récentes
+    if (_fbdb) {
+      fbLoad('clients').then(function(fbClients) {
+        restoreWithData(fbClients || load('clients', DEFAULT_CLIENTS));
+      }).catch(function() {
+        restoreWithData(load('clients', DEFAULT_CLIENTS));
       });
+    } else {
+      restoreWithData(load('clients', DEFAULT_CLIENTS));
     }
   } catch(e) { console.log('Session restore error:', e); }
 })();
@@ -3039,18 +3256,15 @@ function generateSetupLink(clientId){
   CLIENTS = load('clients', DEFAULT_CLIENTS);
   const c = CLIENTS[clientId];
   if(!c){ alert('Client introuvable.'); return; }
-  // Encode essential account data (no history/reports — just enough to log in)
+  // Encode minimal data — PAS de PIN (sécurité)
+  // Le client devra entrer son PIN sur le nouvel appareil
   const payload = {
     id: clientId,
-    pin: c.pin,
     name: c.name,
     initials: c.initials,
-    plan: c.plan || 'Starter',
+    plan: c.plan || 'ACS',
     role: 'client',
-    villas: (c.villas || []).map(function(v){
-      return { id:v.id, name:v.name, address:v.address||'', charges:v.charges||[] };
-    }),
-    aboEnd: c.aboEnd || null
+    v: 2 // version du payload (sans PIN)
   };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   const url = location.origin + location.pathname + '#setup=' + encoded;
@@ -3087,36 +3301,49 @@ function showSetupLinkModal(url, copied){
     var encoded = hash.slice(7);
     var payload;
     try { payload = JSON.parse(decodeURIComponent(escape(atob(encoded)))); } catch(e){ return; }
-    if(!payload || !payload.id || !payload.pin) return;
-    // Import the client account into local storage
-    var clients = load('clients', {});
-    if(clients[payload.id]){
-      // Already exists — just clear hash and go
-      history.replaceState(null,'',location.pathname);
-      return;
+    if(!payload || !payload.id) return;
+
+    // v2: le lien ne contient plus le PIN — juste l'identifiant
+    // Les données du client seront chargées depuis Firebase lors du login
+    // Pour le mode offline, synchroniser depuis Firebase si possible
+    if (_fbdb) {
+      fbLoad('clients').then(function(fbClients) {
+        if (fbClients && fbClients[payload.id]) {
+          // Importer les données complètes depuis Firebase
+          var clients = load('clients', {});
+          clients[payload.id] = fbClients[payload.id];
+          try { localStorage.setItem('acs_clients', JSON.stringify(clients)); } catch(e) {}
+          CLIENTS = clients;
+        }
+      });
     }
-    clients[payload.id] = {
-      pin: payload.pin,
-      name: payload.name || payload.id,
-      initials: payload.initials || payload.id.slice(0,2).toUpperCase(),
-      plan: payload.plan || 'Starter',
-      role: 'client',
-      villas: payload.villas || [],
-      aboEnd: payload.aboEnd || null,
-      history: []
-    };
-    save('clients', clients);
-    CLIENTS = clients;
-    // Clear hash and show welcome toast
+
+    // Si payload v1 (ancien format avec PIN) — migration
+    if (payload.pin && payload.v !== 2) {
+      var clients = load('clients', {});
+      if (!clients[payload.id]) {
+        clients[payload.id] = {
+          pin: payload.pin,
+          name: payload.name || payload.id,
+          initials: payload.initials || payload.id.slice(0,2).toUpperCase(),
+          plan: payload.plan || 'ACS',
+          role: 'client',
+          villas: payload.villas || [],
+          aboEnd: payload.aboEnd || null,
+          history: []
+        };
+        save('clients', clients);
+        CLIENTS = clients;
+      }
+    }
+
     history.replaceState(null,'',location.pathname);
     document.addEventListener('DOMContentLoaded', function(){
-      // Pre-fill login with client's ID
       var lidEl = document.getElementById('lid');
       if(lidEl){ lidEl.value = payload.id; }
-      // Show a small banner
       var banner = document.createElement('div');
       banner.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--or3);color:#080808;padding:.5rem 1.2rem;border-radius:20px;font-size:.78rem;font-weight:700;z-index:9999;';
-      banner.textContent = '✓ Compte importé — entrez votre PIN pour continuer';
+      banner.textContent = '✓ Compte trouvé — entrez votre PIN pour vous connecter';
       document.body.appendChild(banner);
       setTimeout(function(){ banner.remove(); }, 4000);
     });
