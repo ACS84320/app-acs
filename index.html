@@ -470,9 +470,15 @@ function tryLogin(){
   // Toujours recharger depuis localStorage (multi-device safe)
   CLIENTS = load('clients', DEFAULT_CLIENTS);
   const id=document.getElementById('lid').value.trim().toLowerCase();
+  if(!id){
+    for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot err';
+    document.getElementById('pgrid').classList.add('shake');
+    setTimeout(()=>{pin='';updDots();document.getElementById('pgrid').classList.remove('shake');},500);
+    return;
+  }
   let user=null;
   if(id==='admin'&&ADMIN.pin===pin){user={...ADMIN,id:'admin'};}
-  else if(CLIENTS[id]&&CLIENTS[id].pin===pin){user={...CLIENTS[id],id};}
+  else if(CLIENTS[id]&&CLIENTS[id].pin===String(pin)){user={...CLIENTS[id],id};}
   if(user){
     for(let i=0;i<4;i++)document.getElementById('d'+i).className='dot ok';
     // Sauvegarder identifiant + session
@@ -912,6 +918,7 @@ function avSave(mode){
 }
 
 function openAddClient(){
+  fcpin=''; // Reset PIN global
   const pins=[];
   document.getElementById('modalbody').innerHTML=`
     <div class="mh"></div>
@@ -965,8 +972,9 @@ function saveNewClient(){
   const name=document.getElementById('fc-name').value.trim();
   let id=document.getElementById('fc-id').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g,'').replace(/\s+/g,'.');
   const init=(document.getElementById('fc-init')?document.getElementById('fc-init').value.trim().toUpperCase().slice(0,2):name.slice(0,2).toUpperCase());
-  // PIN : utiliser fcpin OU la valeur du champ caché
-  const pinVal = fcpin.length===4 ? fcpin : (document.getElementById('fc-pin')?document.getElementById('fc-pin').value:'');
+  // PIN : utiliser fcpin OU la valeur du champ caché, normaliser en string
+  var rawPin = fcpin.length===4 ? fcpin : (document.getElementById('fc-pin')?document.getElementById('fc-pin').value:'');
+  const pinVal = String(rawPin).replace(/\D/g,'').slice(0,4);
   const plan='ACS';
   const villa=(document.getElementById('fc-villa')?document.getElementById('fc-villa').value.trim():'');
 
@@ -1115,6 +1123,26 @@ function openVilla(id){
     parts.push('</div>');
   }
 
+  // Airbnb
+  var airbnbConnected = v.airbnbId ? true : false;
+  var resa = v.reservations || [];
+  var curM = new Date().getMonth(), curY = new Date().getFullYear();
+  var monthResa = resa.filter(function(r){ var d=new Date(r.checkin); return d.getMonth()===curM && d.getFullYear()===curY; });
+  var monthRevAirbnb = monthResa.reduce(function(s,r){return s+(r.amount||0);},0);
+
+  parts.push('<div style="margin-top:.8rem;">');
+  if(airbnbConnected){
+    parts.push('<div style="background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.2);border-radius:8px;padding:.7rem .8rem;margin-bottom:.6rem;cursor:pointer;" onclick="openAirbnbConnect(\''+id+'\')">');
+    parts.push('<div style="display:flex;justify-content:space-between;align-items:center;">');
+    parts.push('<div><div style="font-size:.62rem;color:#FF5A5F;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">⌂ Airbnb connecté</div>');
+    parts.push('<div style="font-size:.78rem;color:var(--blanc);margin-top:.2rem;">'+monthResa.length+' résa ce mois · <span style="color:#4ade80;font-weight:600;">'+fmt(monthRevAirbnb)+'</span></div></div>');
+    parts.push('<div style="color:var(--or3);font-size:1.1rem;">›</div>');
+    parts.push('</div></div>');
+  } else {
+    parts.push('<button class="add-btn" style="margin-bottom:.6rem;border-color:rgba(255,90,95,.3);color:#FF5A5F;" onclick="openAirbnbConnect(\''+id+'\')">⌂ Connecter Airbnb</button>');
+  }
+  parts.push('</div>');
+
   // Locations
   var locs = v.locations || [];
   parts.push('<div style="margin-top:.8rem;">');
@@ -1206,6 +1234,190 @@ function deleteLocation(villaId, idx){
   CU = {...CLIENTS[cid], id:cid};
   openVilla(villaId);
   showToast('✅ Location supprimée');
+}
+
+// ══ INTÉGRATION AIRBNB ══
+function openAirbnbConnect(villaId){
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v) return;
+
+  var connected = v.airbnbId ? true : false;
+  var h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:1rem;">';
+  h+='<div style="font-size:2.2rem;margin-bottom:.4rem;"><span style="color:#FF5A5F;">⌂</span></div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Airbnb — '+v.name+'</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">'+(connected?'✅ Compte connecté':'Associez votre listing Airbnb')+'</div>';
+  h+='</div>';
+
+  if(!connected){
+    h+='<div style="background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">';
+    h+='<div style="font-size:.78rem;color:var(--blanc);font-weight:600;margin-bottom:.5rem;">Comment ça marche ?</div>';
+    h+='<div style="font-size:.72rem;color:var(--gris);line-height:1.6;">';
+    h+='1. Entrez l\'URL ou l\'ID de votre listing Airbnb<br>';
+    h+='2. ACS suivra vos réservations automatiquement<br>';
+    h+='3. Les montants seront pré-remplis dans vos déclarations';
+    h+='</div></div>';
+    h+='<div class="form-group"><label class="form-label">URL ou ID du listing Airbnb *</label>';
+    h+='<input class="form-input" id="airbnb-url" placeholder="Ex: airbnb.com/rooms/12345 ou 12345" /></div>';
+    h+='<div class="form-group"><label class="form-label">Nom sur Airbnb (optionnel)</label>';
+    h+='<input class="form-input" id="airbnb-name" placeholder="'+v.name+'" value="'+v.name+'" /></div>';
+    h+='<button class="save-btn" style="background:linear-gradient(135deg,#FF5A5F,#FF385C);color:#fff;" onclick="connectAirbnb(\''+villaId+'\')"><span style="color:#FF5A5F;">⌂</span> Connecter Airbnb</button>';
+  } else {
+    h+='<div style="background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.2);border-radius:10px;padding:.8rem;margin-bottom:.8rem;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h+='<div><div style="font-size:.75rem;color:var(--gris);">Listing ID</div><div style="font-size:.9rem;font-weight:600;color:#FF5A5F;">'+v.airbnbId+'</div></div>';
+    h+='<div style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);padding:.2rem .6rem;border-radius:20px;font-size:.65rem;color:#4ade80;font-weight:600;">Connecté</div>';
+    h+='</div></div>';
+
+    // Résumé des réservations connues
+    var resa = v.reservations || [];
+    var curMonth = new Date().getMonth();
+    var curYear = new Date().getFullYear();
+    var monthResa = resa.filter(function(r){
+      var d = new Date(r.checkin);
+      return d.getMonth()===curMonth && d.getFullYear()===curYear;
+    });
+    var monthTotal = monthResa.reduce(function(s,r){return s+(r.amount||0);},0);
+
+    h+='<div class="kr">';
+    h+='<div class="kc"><div class="kl">Réservations ce mois</div><div class="kv" style="font-size:1.3rem;">'+monthResa.length+'</div></div>';
+    h+='<div class="kc"><div class="kl">Revenus Airbnb</div><div class="kv" style="font-size:1.3rem;color:#4ade80;">'+fmt(monthTotal)+'</div></div>';
+    h+='</div>';
+
+    // Liste réservations
+    h+='<div class="sh">Réservations connues</div>';
+    if(resa.length===0){
+      h+='<div style="text-align:center;color:var(--gris);font-size:.78rem;padding:1rem 0;">Aucune réservation enregistrée</div>';
+    } else {
+      resa.slice().reverse().forEach(function(r,ri){
+        var ci = new Date(r.checkin).toLocaleDateString('fr-FR');
+        var co = new Date(r.checkout).toLocaleDateString('fr-FR');
+        h+='<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem;background:var(--noir3);border-radius:6px;margin-bottom:.3rem;">';
+        h+='<div style="width:32px;height:32px;border-radius:6px;background:rgba(255,90,95,.1);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;color:#FF5A5F;">⌂</div>';
+        h+='<div style="flex:1;min-width:0;"><div style="font-size:.78rem;font-weight:600;">'+ci+' → '+co+'</div>';
+        h+='<div style="font-size:.65rem;color:var(--gris);">'+(r.guest||'Voyageur')+(r.nights?' · '+r.nights+' nuits':'')+'</div></div>';
+        h+='<div style="text-align:right;"><div style="font-size:.88rem;font-weight:700;color:#4ade80;">'+fmt(r.amount||0)+'</div>';
+        h+='<div style="font-size:.58rem;color:var(--gris);">'+(r.source||'Airbnb')+'</div></div>';
+        h+='</div>';
+      });
+    }
+
+    h+='<button class="add-btn" style="margin-top:.6rem;" onclick="openAddReservation(\''+villaId+'\')">＋ Ajouter une réservation</button>';
+    h+='<button class="cancel-btn" style="margin-top:.5rem;color:#f87171;border-color:rgba(220,38,38,.3);" onclick="disconnectAirbnb(\''+villaId+'\')">Déconnecter Airbnb</button>';
+  }
+  h+='<button class="cancel-btn" style="margin-top:.4rem;" onclick="openVilla(\''+villaId+'\')">Retour</button>';
+  document.getElementById('modalbody').innerHTML=h;
+}
+
+function connectAirbnb(villaId){
+  var url = (document.getElementById('airbnb-url').value||'').trim();
+  if(!url){showToast('⚠️ Entrez l\'URL ou l\'ID Airbnb');return;}
+  // Extraire l'ID
+  var id = url.replace(/.*rooms\//,'').replace(/\?.*/,'').replace(/[^0-9a-zA-Z_-]/g,'');
+  if(!id) id = url;
+  var airbnbName = (document.getElementById('airbnb-name').value||'').trim();
+
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v) return;
+  v.airbnbId = id;
+  v.airbnbName = airbnbName || v.name;
+  if(!v.reservations) v.reservations = [];
+  save('clients', CLIENTS);
+  CU = {...CLIENTS[cid], id:cid};
+  showToast('✅ Airbnb connecté !');
+  openAirbnbConnect(villaId);
+}
+
+function disconnectAirbnb(villaId){
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v) return;
+  delete v.airbnbId;
+  delete v.airbnbName;
+  save('clients', CLIENTS);
+  CU = {...CLIENTS[cid], id:cid};
+  showToast('✅ Airbnb déconnecté');
+  openVilla(villaId);
+}
+
+function openAddReservation(villaId){
+  var h='<div class="mh"></div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:var(--or3);margin-bottom:.3rem;">＋ Nouvelle réservation</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-bottom:1rem;">Ajoutez une réservation Airbnb ou autre plateforme</div>';
+  h+='<div class="form-row">';
+  h+='<div class="form-group"><label class="form-label">Check-in *</label><input class="form-input" type="date" id="resa-in" /></div>';
+  h+='<div class="form-group"><label class="form-label">Check-out *</label><input class="form-input" type="date" id="resa-out" /></div>';
+  h+='</div>';
+  h+='<div class="form-group"><label class="form-label">Montant reçu (THB) *</label>';
+  h+='<div style="display:flex;align-items:center;gap:.4rem;"><input class="form-input" type="number" id="resa-amount" placeholder="Ex: 15000" style="flex:1;" /><span style="color:var(--or3);font-weight:700;">฿</span></div></div>';
+  h+='<div class="form-group"><label class="form-label">Nom du voyageur (optionnel)</label>';
+  h+='<input class="form-input" id="resa-guest" placeholder="Ex: John D." /></div>';
+  h+='<div class="form-group"><label class="form-label">Source</label>';
+  h+='<div style="display:flex;gap:.4rem;flex-wrap:wrap;" id="resa-source">';
+  h+='<div class="plat-chip on" onclick="selectResaSource(this)">Airbnb</div>';
+  h+='<div class="plat-chip" onclick="selectResaSource(this)">Booking</div>';
+  h+='<div class="plat-chip" onclick="selectResaSource(this)">Agoda</div>';
+  h+='<div class="plat-chip" onclick="selectResaSource(this)">Direct</div>';
+  h+='</div></div>';
+  h+='<button class="save-btn" onclick="saveReservation(\''+villaId+'\')">✓ Enregistrer</button>';
+  h+='<button class="cancel-btn" onclick="openAirbnbConnect(\''+villaId+'\')">Retour</button>';
+  document.getElementById('modalbody').innerHTML=h;
+}
+
+function selectResaSource(el){
+  document.querySelectorAll('#resa-source .plat-chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function saveReservation(villaId){
+  var checkin = document.getElementById('resa-in').value;
+  var checkout = document.getElementById('resa-out').value;
+  var amount = parseFloat(document.getElementById('resa-amount').value)||0;
+  if(!checkin||!checkout){showToast('⚠️ Renseignez les dates');return;}
+  if(!amount){showToast('⚠️ Renseignez le montant');return;}
+  var guest = (document.getElementById('resa-guest').value||'').trim();
+  var sourceEl = document.querySelector('#resa-source .plat-chip.on');
+  var source = sourceEl ? sourceEl.textContent : 'Airbnb';
+  var nights = Math.max(1, Math.ceil((new Date(checkout)-new Date(checkin))/86400000));
+
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var v = CLIENTS[cid] && CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v) return;
+  if(!v.reservations) v.reservations = [];
+  v.reservations.push({
+    checkin:checkin, checkout:checkout, amount:amount,
+    guest:guest||'Voyageur', source:source, nights:nights,
+    ts:Date.now()
+  });
+  // Trier par date
+  v.reservations.sort(function(a,b){return new Date(a.checkin)-new Date(b.checkin);});
+  save('clients', CLIENTS);
+  CU = {...CLIENTS[cid], id:cid};
+  showToast('✅ Réservation enregistrée — '+fmt(amount));
+  openAirbnbConnect(villaId);
+}
+
+// Calculer les revenus Airbnb d'une villa pour un mois donné
+function getAirbnbRevenue(villa, mois, annee){
+  var MOIS_NOMS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var moisIdx = MOIS_NOMS.indexOf(mois);
+  if(moisIdx < 0) return {total:0, count:0, details:[]};
+  var resa = villa.reservations || [];
+  var matched = [];
+  resa.forEach(function(r){
+    var d = new Date(r.checkin);
+    if(d.getMonth()===moisIdx && d.getFullYear()===parseInt(annee)){
+      matched.push(r);
+    }
+  });
+  var total = matched.reduce(function(s,r){return s+(r.amount||0);},0);
+  return {total:total, count:matched.length, details:matched};
 }
 
 function confirmDeleteVilla(id_unused){
@@ -1427,14 +1639,25 @@ function openDeclaration(){
         +'</div>'
       : '';
 
+    // Calculer revenus Airbnb connus pour ce mois
+    var airbnbData = getAirbnbRevenue(v, curMois, curYear);
+    var airbnbHint = '';
+    if(airbnbData.count > 0){
+      airbnbHint = '<div style="background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.15);border-radius:6px;padding:.45rem .6rem;margin-bottom:.5rem;font-size:.68rem;color:var(--gris);line-height:1.5;">'
+        +'<span style="color:#FF5A5F;font-weight:600;">⌂ '+airbnbData.count+' réservation'+(airbnbData.count>1?'s':'')+' Airbnb</span> détectée'+(airbnbData.count>1?'s':'')+' : <span style="color:#4ade80;font-weight:600;">'+fmt(airbnbData.total)+'</span>'
+        +'<br><span style="font-size:.62rem;">Montant pré-rempli — modifiez si nécessaire</span>'
+        +'</div>';
+    }
+
     return '<div style="background:var(--noir3);border:1px solid rgba(201,149,12,.18);border-radius:10px;padding:.9rem;margin-bottom:.8rem;">'
       +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:var(--or3);font-weight:700;margin-bottom:.75rem;">🏠 '+v.name+'</div>'
 
       // ── Revenus
       +'<div style="font-size:.63rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Revenus du mois</div>'
+      + airbnbHint
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
         +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Airbnb</span>'
-        +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" style="flex:1;text-align:right;" inputmode="numeric"/>'
+        +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" value="'+(airbnbData.total>0?airbnbData.total:'')+'" style="flex:1;text-align:right;'+(airbnbData.total>0?'border-color:rgba(255,90,95,.3);':'')+'" inputmode="numeric"/>'
         +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
@@ -1474,6 +1697,17 @@ function openDeclaration(){
       +'</div>'
 
       + fixedHtml
+
+      // Section revenus manquants (si Airbnb connecté)
+      +(v.airbnbId ? '<div style="margin-top:.7rem;padding:.5rem .6rem;background:rgba(255,90,95,.04);border-radius:6px;border-left:2px solid rgba(255,90,95,.25);">'
+        +'<div style="font-size:.62rem;color:#FF5A5F;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Revenus non-Airbnb manquants ?</div>'
+        +'<div style="font-size:.68rem;color:var(--gris);margin-bottom:.4rem;">Location directe, espèces, ou autre plateforme non renseignée</div>'
+        +'<div style="display:flex;align-items:center;gap:.5rem;">'
+          +'<input class="form-input" type="number" id="d'+vi+'_extra" placeholder="Montant suppl." style="flex:1;text-align:right;" inputmode="numeric"/>'
+          +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;">฿</span>'
+        +'</div>'
+        +'</div>' : '')
+
       +'</div>';
   }).join('');
 
@@ -1512,6 +1746,7 @@ function submitDeclaration(){
       eau: parseFloat((document.getElementById('d'+vi+'_eau')||{}).value)||0,
       men: parseFloat((document.getElementById('d'+vi+'_men')||{}).value)||0,
       div: parseFloat((document.getElementById('d'+vi+'_div')||{}).value)||0,
+      extra: parseFloat((document.getElementById('d'+vi+'_extra')||{}).value)||0,
       cp:  parseFloat((document.getElementById('d'+vi+'_com')||{}).value)||(v.comPct||20)
     });
   });
@@ -1524,8 +1759,8 @@ function submitDeclaration(){
   villaData.forEach(function(d){
     const v=d.v;
     const air=d.air, bk=d.bk, el=d.el, eau=d.eau, men=d.men;
-    const div=d.div, cp=d.cp;
-    const rev = air + bk;
+    const div=d.div, extra=d.extra||0, cp=d.cp;
+    const rev = air + bk + extra;
     if(rev===0) return;
 
     // Charges fixes de la villa — seulement pisciniste, jardinier, internet
