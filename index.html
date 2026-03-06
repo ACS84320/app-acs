@@ -717,16 +717,21 @@ function buildClient(){
     <div class="kc"><div class="kl">Revenus ${['Jan.','Fév.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][new Date().getMonth()]}</div><div class="kv">${fmt(totalRev)}</div><div class="kd up">Ce mois</div></div>
     <div class="kc"><div class="kl">Bénéfice net</div><div class="kv">${fmt(totalNet)}</div><div class="kd ${totalNet>0?'up':''}">${u.villas.length} villa${u.villas.length>1?'s':''}</div></div>
   </div>
-  <div class="kc" style="margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);cursor:pointer;" onclick="this.querySelector('.com-detail').style.display=this.querySelector('.com-detail').style.display==='none'?'block':'none'">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div><div class="kl">💰 Commissions générées</div><div class="kv">${fmt(totalCom)}</div><div class="kd up">${totalRev>0?comPct+'% des revenus bruts':'Aucune déclaration'}</div></div>
-      <div style="text-align:right;"><div style="font-size:.6rem;color:var(--gris);letter-spacing:.06em;text-transform:uppercase;">${u.villas.length} villa${u.villas.length>1?'s':''}</div><div style="font-size:.75rem;color:var(--or3);margin-top:.15rem;">Détail ▾</div></div>
-    </div>
-    <div class="com-detail" style="display:none;margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(201,149,12,.15);">
-      ${u.villas.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem .3rem;margin-bottom:.2rem;background:rgba(255,255,255,.03);border-radius:5px;">
-        <span style="font-size:.72rem;color:var(--blanc);">🏠 ${v.name} <span style="color:var(--gris);font-size:.6rem;">${v.comPct||20}%</span></span>
-        <span style="font-size:.75rem;color:var(--or3);font-weight:700;">${fmt(v.com||0)}</span>
-      </div>`).join('')}
+  <div class="kr" style="grid-template-columns:1fr;">
+    <div class="kc" style="background:linear-gradient(135deg,rgba(201,149,12,.12),rgba(201,149,12,.04));border-color:rgba(201,149,12,.35);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="kl">💰 Commissions générées</div>
+          <div class="kv">${fmt(totalCom)}</div>
+          <div class="kd up">${totalRev>0?comPct+'% des revenus bruts':'Aucune déclaration'}</div>
+        </div>
+        <div style="text-align:right;padding-top:.2rem;">
+          ${u.villas.map(v=>`<div style="display:flex;justify-content:flex-end;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+            <span style="font-size:.68rem;color:var(--gris);">🏠 ${v.name} <span style="font-size:.58rem;">${v.comPct||20}%</span></span>
+            <span style="font-size:.75rem;color:var(--or3);font-weight:700;min-width:60px;text-align:right;">${fmt(v.com||0)}</span>
+          </div>`).join('')}
+        </div>
+      </div>
     </div>
   </div>
   <div class="qb" onclick="openDeclaration()" style="border-color:rgba(201,149,12,.5);background:rgba(201,149,12,.07);"><div class="qi">📋</div><div class="qt"><strong>Déclarer ce mois</strong><small>Formulaire guidé — rapide et simple</small></div><div class="qa">›</div></div>
@@ -1742,19 +1747,26 @@ function getAirbnbRevenue(villa, mois, annee){
 function getLocationRevenue(villa, mois, annee){
   var MOIS_NOMS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   var moisIdx = MOIS_NOMS.indexOf(mois);
-  if(moisIdx < 0) return {total:0, count:0, airbnb:0, booking:0};
+  if(moisIdx < 0) return {total:0, count:0, airbnb:0, booking:0, direct:0, details:[]};
   var locs = villa.locations || [];
   var matched = [];
   locs.forEach(function(loc){
-    var d = new Date(loc.from);
-    if(d.getMonth()===moisIdx && d.getFullYear()===parseInt(annee)){
+    // Inclure si le séjour chevauche le mois (check-in ou check-out dans le mois)
+    var dFrom = new Date(loc.from);
+    var dTo = new Date(loc.to);
+    var monthStart = new Date(parseInt(annee), moisIdx, 1);
+    var monthEnd = new Date(parseInt(annee), moisIdx+1, 0, 23, 59, 59);
+    if(dFrom <= monthEnd && dTo >= monthStart){
       matched.push(loc);
     }
   });
   var total = matched.reduce(function(s,l){return s+(l.amount||0);},0);
   var airbnb = matched.filter(function(l){ return (l.platform||'').toLowerCase().indexOf('airbnb')>=0; }).reduce(function(s,l){return s+(l.amount||0);},0);
   var booking = matched.filter(function(l){ return (l.platform||'').toLowerCase().indexOf('booking')>=0; }).reduce(function(s,l){return s+(l.amount||0);},0);
-  return {total:total, count:matched.length, airbnb:airbnb, booking:booking};
+  var direct = matched.filter(function(l){ var p=(l.platform||'').toLowerCase(); return p.indexOf('airbnb')<0 && p.indexOf('booking')<0 && p.indexOf('agoda')<0; }).reduce(function(s,l){return s+(l.amount||0);},0);
+  var agoda = matched.filter(function(l){ return (l.platform||'').toLowerCase().indexOf('agoda')>=0; }).reduce(function(s,l){return s+(l.amount||0);},0);
+  direct += agoda; // Agoda et Direct vont dans le champ "Direct/Autres"
+  return {total:total, count:matched.length, airbnb:airbnb, booking:booking, direct:direct, details:matched};
 }
 
 function confirmDeleteVilla(id_unused){
@@ -1997,14 +2009,15 @@ function openDeclaration(){
     var locRevenue = getLocationRevenue(v, curMois, curYear);
     var totalSuggested = airbnbData.total + locRevenue.total;
     var airbnbHint = '';
-    if(airbnbData.count > 0 || locRevenue.count > 0){
-      airbnbHint = '<div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:6px;padding:.45rem .6rem;margin-bottom:.5rem;font-size:.68rem;color:var(--gris);line-height:1.5;">'
-        +'<div style="font-weight:600;color:var(--or3);margin-bottom:.2rem;">💡 Revenus détectés ce mois</div>'
+    var hasHint = airbnbData.count > 0 || locRevenue.count > 0;
+    airbnbHint = '<div id="d'+vi+'_hint" style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:6px;padding:.45rem .6rem;margin-bottom:.5rem;font-size:.68rem;color:var(--gris);line-height:1.5;display:'+(hasHint?'block':'none')+';">';
+    if(hasHint){
+      airbnbHint += '<div style="font-weight:600;color:var(--or3);margin-bottom:.2rem;">💡 Revenus détectés — '+curMois+' '+curYear+'</div>'
         +(airbnbData.count>0?'<div><span style="color:#FF5A5F;font-weight:600;">⌂ '+airbnbData.count+' résa Airbnb</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(airbnbData.total)+'</span></div>':'')
         +(locRevenue.count>0?'<div><span style="color:var(--or3);font-weight:600;">📅 '+locRevenue.count+' location'+(locRevenue.count>1?'s':'')+' enregistrée'+(locRevenue.count>1?'s':'')+'</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(locRevenue.total)+'</span></div>':'')
-        +(totalSuggested>0?'<div style="margin-top:.3rem;font-size:.65rem;font-weight:600;color:#4ade80;">Total suggéré : '+fmt(totalSuggested)+' — montants pré-remplis</div>':'')
-        +'</div>';
+        +(totalSuggested>0?'<div style="margin-top:.3rem;font-size:.65rem;font-weight:600;color:#4ade80;">Total suggéré : '+fmt(totalSuggested)+' — montants pré-remplis</div>':'');
     }
+    airbnbHint += '</div>';
 
     return '<div style="background:var(--noir3);border:1px solid rgba(201,149,12,.18);border-radius:10px;padding:.9rem;margin-bottom:.8rem;">'
       +'<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;color:var(--or3);font-weight:700;margin-bottom:.75rem;">🏠 '+v.name+'</div>'
@@ -2017,9 +2030,14 @@ function openDeclaration(){
         +'<input class="form-input" type="number" id="d'+vi+'_air" placeholder="0" value="'+((airbnbData.total+locRevenue.airbnb)>0?(airbnbData.total+locRevenue.airbnb):'')+'" style="flex:1;text-align:right;'+((airbnbData.total+locRevenue.airbnb)>0?'border-color:rgba(255,90,95,.3);':'')+'" inputmode="numeric"/>'
         +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
       +'</div>'
-      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
         +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Booking.com</span>'
         +'<input class="form-input" type="number" id="d'+vi+'_bk" placeholder="0" value="'+(locRevenue.booking>0?locRevenue.booking:'')+'" style="flex:1;text-align:right;'+(locRevenue.booking>0?'border-color:rgba(74,222,128,.3);':'')+'" inputmode="numeric"/>'
+        +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
+        +'<span style="font-size:.82rem;color:var(--blanc);flex:1.4;min-width:90px;">Direct / Autres</span>'
+        +'<input class="form-input" type="number" id="d'+vi+'_extra" placeholder="0" value="'+(locRevenue.direct>0?locRevenue.direct:'')+'" style="flex:1;text-align:right;'+(locRevenue.direct>0?'border-color:rgba(74,222,128,.3);':'')+'" inputmode="numeric"/>'
         +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;min-width:16px;">฿</span>'
       +'</div>'
 
@@ -2055,15 +2073,7 @@ function openDeclaration(){
 
       + fixedHtml
 
-      // Section revenus manquants (si Airbnb connecté)
-      +(v.airbnbId ? '<div style="margin-top:.7rem;padding:.5rem .6rem;background:rgba(255,90,95,.04);border-radius:6px;border-left:2px solid rgba(255,90,95,.25);">'
-        +'<div style="font-size:.62rem;color:#FF5A5F;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Revenus non-Airbnb manquants ?</div>'
-        +'<div style="font-size:.68rem;color:var(--gris);margin-bottom:.4rem;">Location directe, espèces, ou autre plateforme non renseignée</div>'
-        +'<div style="display:flex;align-items:center;gap:.5rem;">'
-          +'<input class="form-input" type="number" id="d'+vi+'_extra" placeholder="Montant suppl." style="flex:1;text-align:right;" inputmode="numeric"/>'
-          +'<span style="color:var(--or3);font-weight:700;font-size:.8rem;">฿</span>'
-        +'</div>'
-        +'</div>' : '')
+      +''
 
       +'</div>';
   }).join('');
@@ -2075,16 +2085,56 @@ function openDeclaration(){
       +'<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">Remplissez les montants · laissez vide si zéro</div>'
     +'</div>'
     +'<div style="display:flex;gap:.5rem;margin-bottom:1rem;">'
-      +'<select class="form-input" id="decl-mois" style="flex:1.5;">'
+      +'<select class="form-input" id="decl-mois" style="flex:1.5;" onchange="refreshDeclarationHints()">'
         + moisNoms.map(function(m){ return '<option'+(m===curMois?' selected':'')+'>'+m+'</option>'; }).join('')
       +'</select>'
-      +'<input class="form-input" id="decl-annee" type="number" value="'+curYear+'" style="width:75px;text-align:center;" />'
+      +'<input class="form-input" id="decl-annee" type="number" value="'+curYear+'" style="width:75px;text-align:center;" onchange="refreshDeclarationHints()" />'
     +'</div>'
-    + villaBlocks
+    +'<div id="decl-villa-blocks">'+ villaBlocks +'</div>'
     +'<button class="save-btn" onclick="submitDeclaration()">✓ Générer mes rapports</button>'
     +'<button class="cancel-btn" onclick="closeMov()">Annuler</button>';
 
   document.getElementById('modal').classList.add('open');
+}
+
+// Recalculer les suggestions quand le mois/année change
+function refreshDeclarationHints(){
+  var selMois = document.getElementById('decl-mois').value;
+  var selAnnee = document.getElementById('decl-annee').value;
+  if(!CU||!CU.villas) return;
+  CU.villas.forEach(function(v, vi){
+    var airbnbData = getAirbnbRevenue(v, selMois, selAnnee);
+    var locRevenue = getLocationRevenue(v, selMois, selAnnee);
+    // Mettre à jour les champs pré-remplis
+    var airField = document.getElementById('d'+vi+'_air');
+    var bkField = document.getElementById('d'+vi+'_bk');
+    var extraField = document.getElementById('d'+vi+'_extra');
+    if(airField && !airField._userEdited){
+      var airVal = (airbnbData.total+locRevenue.airbnb);
+      airField.value = airVal>0?airVal:'';
+    }
+    if(bkField && !bkField._userEdited){
+      bkField.value = locRevenue.booking>0?locRevenue.booking:'';
+    }
+    if(extraField && !extraField._userEdited){
+      extraField.value = locRevenue.direct>0?locRevenue.direct:'';
+    }
+    // Mettre à jour le hint
+    var hintEl = document.getElementById('d'+vi+'_hint');
+    if(hintEl){
+      var totalSuggested = airbnbData.total + locRevenue.total;
+      if(airbnbData.count > 0 || locRevenue.count > 0){
+        var hintHtml = '<div style="font-weight:600;color:var(--or3);margin-bottom:.2rem;">💡 Revenus détectés — '+selMois+' '+selAnnee+'</div>';
+        if(airbnbData.count>0) hintHtml+='<div><span style="color:#FF5A5F;font-weight:600;">⌂ '+airbnbData.count+' résa Airbnb</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(airbnbData.total)+'</span></div>';
+        if(locRevenue.count>0) hintHtml+='<div><span style="color:var(--or3);font-weight:600;">📅 '+locRevenue.count+' location'+(locRevenue.count>1?'s':'')+' enregistrée'+(locRevenue.count>1?'s':'')+'</span> : <span style="color:#4ade80;font-weight:600;">'+fmt(locRevenue.total)+'</span></div>';
+        if(totalSuggested>0) hintHtml+='<div style="margin-top:.3rem;font-size:.65rem;font-weight:600;color:#4ade80;">Total suggéré : '+fmt(totalSuggested)+'</div>';
+        hintEl.innerHTML = hintHtml;
+        hintEl.style.display = 'block';
+      } else {
+        hintEl.style.display = 'none';
+      }
+    }
+  });
 }
 
 function submitDeclaration(){
