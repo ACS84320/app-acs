@@ -368,7 +368,7 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
   </div>
   <div id="pg-dash" class="ct"></div>
   <div id="pg-hist" class="ct"></div>
-  <div id="pg-msg" class="ct" style="padding:0;"><div style="padding:1rem 1rem .5rem;"><div class="h1">Messages</div><div class="sub">Communication avec votre conciergerie</div></div><div id="threads"></div></div>
+  <div id="pg-msg" class="ct" style="padding:0;"><div style="padding:1rem 1rem .5rem;"><div class="h1">Messages</div><div class="sub">Communication ACS</div><button class="add-btn" style="margin-bottom:.6rem;padding:.55rem;font-size:.75rem;" onclick="openAddFriend()">＋ Ajouter un ami</button></div><div id="threads"></div></div>
   <div id="pg-profil" class="ct"></div>
   <nav class="nav">
     <button class="ni on" onclick="goPage('dash')" id="nv-dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
@@ -386,9 +386,74 @@ function updDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(
 <div class="toast" id="toastel"></div>
 
 <script>
-// ══ STORAGE ══
-function save(k,v){try{localStorage.setItem('acs_'+k,JSON.stringify(v));}catch(e){}}
+// ══ STORAGE (localStorage + IndexedDB pour persistance long terme) ══
+function save(k,v){
+  try{localStorage.setItem('acs_'+k,JSON.stringify(v));}catch(e){}
+  idbSave(k,v);
+}
 function load(k,def){try{const v=localStorage.getItem('acs_'+k);return v?JSON.parse(v):def;}catch(e){return def;}}
+
+// ── IndexedDB pour stockage long terme ──
+var _idb=null;
+function idbOpen(){
+  return new Promise(function(ok,fail){
+    if(_idb){ok(_idb);return;}
+    var req=indexedDB.open('ACS_DB',1);
+    req.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains('store')) db.createObjectStore('store');
+    };
+    req.onsuccess=function(e){_idb=e.target.result;ok(_idb);};
+    req.onerror=function(){fail();};
+  });
+}
+function idbSave(k,v){
+  idbOpen().then(function(db){
+    var tx=db.transaction('store','readwrite');
+    tx.objectStore('store').put(v,k);
+  }).catch(function(){});
+}
+function idbLoad(k){
+  return idbOpen().then(function(db){
+    return new Promise(function(ok){
+      var tx=db.transaction('store','readonly');
+      var req=tx.objectStore('store').get(k);
+      req.onsuccess=function(){ok(req.result);};
+      req.onerror=function(){ok(undefined);};
+    });
+  }).catch(function(){return undefined;});
+}
+// Restaurer depuis IDB si localStorage est vide (ex: données effacées)
+function idbRestore(){
+  return idbOpen().then(function(db){
+    return new Promise(function(ok){
+      var tx=db.transaction('store','readonly');
+      var req=tx.objectStore('store').getAll();
+      var reqKeys=tx.objectStore('store').getAllKeys();
+      var vals,keys;
+      req.onsuccess=function(){vals=req.result;if(keys)done();};
+      reqKeys.onsuccess=function(){keys=reqKeys.result;if(vals)done();};
+      function done(){
+        var restored=0;
+        for(var i=0;i<keys.length;i++){
+          var lk='acs_'+keys[i];
+          if(!localStorage.getItem(lk)){
+            try{localStorage.setItem(lk,JSON.stringify(vals[i]));restored++;}catch(e){}
+          }
+        }
+        if(restored>0) console.log('[ACS] Restauré '+restored+' entrées depuis IndexedDB');
+        ok(restored);
+      }
+      req.onerror=function(){ok(0);};
+    });
+  }).catch(function(){return 0;});
+}
+// Lancer restauration au démarrage
+idbRestore().then(function(n){
+  if(n>0){
+    CLIENTS=load('clients',DEFAULT_CLIENTS);
+  }
+});
 
 // ══ DEFAULT DATA ══
 const DEFAULT_CLIENTS = {};
@@ -538,12 +603,12 @@ function buildAdmin(){
     const cr=c.villas?c.villas.reduce((s,v)=>s+(v.rev||0),0):0;
     const cn=c.villas?c.villas.reduce((s,v)=>s+(v.net||0),0):0;
     h+=`<div class="cc">
-      <div class="cct"><div class="ccn">${c.name}</div><span class="ccp b">ACS</span></div>
+      <div class="cct"><div class="ccn">${c.name}</div>${c.aboEnd?('<span class="ccp '+(new Date(c.aboEnd)>new Date()?'s':'p')+'">'+( new Date(c.aboEnd)>new Date()? '📅 '+new Date(c.aboEnd).toLocaleDateString('fr-FR') : '⚠️ Expiré')+'</span>'):('<span class="ccp b">ACS</span>')}</div>
       <div class="ccs"><div class="cst">Revenus <span>${fmt(cr)}</span></div><div class="cst">NET <span style="color:${cn>=0?'#4ade80':'#f87171'}">${cn>=0?'+':''}${fmt(cn)}</span></div><div class="cst">Villas <span>${cv}</span></div></div>
       <div class="cca">
         <div class="cb v" onclick="viewClient('${cid}')">👁 Voir</div>
-        <div class="cb m" onclick="openConvWith('${c.name}')">💬 Message</div>
-        <div class="cb r2" onclick="showToast('Rapport ${c.name} généré !')">📄 Rapport</div>
+        <div class="cb m" onclick="openConvWith('${c.name}')">💬</div>
+        <div class="cb r2" onclick="openSetAbo('${cid}')">📅 Abo</div>
         <div class="cb del" onclick="confirmDelete('${cid}')">🗑</div>
       </div>
     </div>`;
@@ -957,6 +1022,55 @@ function doDelete(id){
   showToast(`🗑 ${name} supprimé`);
 }
 
+// ══ GESTION ABONNEMENT ══
+function openSetAbo(cid){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var c = CLIENTS[cid]; if(!c) return;
+  var curEnd = c.aboEnd || '';
+  var daysLeft = '';
+  if(curEnd){
+    var diff = Math.ceil((new Date(curEnd) - new Date()) / 86400000);
+    daysLeft = diff > 0 ? diff + ' jours restants' : 'Expiré depuis ' + Math.abs(diff) + ' jours';
+  }
+  document.getElementById('modalbody').innerHTML =
+    '<div class="mh"></div>'
+    +'<div style="text-align:center;margin-bottom:1rem;">'
+      +'<div style="font-size:2rem;margin-bottom:.4rem;">📅</div>'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Abonnement — '+c.name+'</div>'
+      +(daysLeft?'<div style="font-size:.78rem;color:'+(new Date(curEnd)>new Date()?'#4ade80':'#f87171')+';margin-top:.3rem;font-weight:600;">'+daysLeft+'</div>':'')
+    +'</div>'
+    +'<div class="form-group"><label class="form-label">Date de fin d\'abonnement</label>'
+    +'<input class="form-input" type="date" id="abo-date" value="'+curEnd+'" /></div>'
+    +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem;">'
+      +'<button class="plat-chip" onclick="aboQuick(1)">+1 mois</button>'
+      +'<button class="plat-chip" onclick="aboQuick(3)">+3 mois</button>'
+      +'<button class="plat-chip" onclick="aboQuick(6)">+6 mois</button>'
+      +'<button class="plat-chip" onclick="aboQuick(12)">+1 an</button>'
+    +'</div>'
+    +'<button class="save-btn" onclick="saveAbo(\''+cid+'\')">✓ Enregistrer</button>'
+    +'<button class="cancel-btn" onclick="closeMov()">Annuler</button>';
+  document.getElementById('modal').classList.add('open');
+}
+function aboQuick(months){
+  var d = new Date();
+  var cur = document.getElementById('abo-date').value;
+  if(cur && new Date(cur) > d) d = new Date(cur);
+  d.setMonth(d.getMonth() + months);
+  document.getElementById('abo-date').value = d.toISOString().split('T')[0];
+}
+function saveAbo(cid){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var date = document.getElementById('abo-date').value;
+  if(!date){showToast('⚠️ Sélectionnez une date');return;}
+  if(CLIENTS[cid]){
+    CLIENTS[cid].aboEnd = date;
+    save('clients', CLIENTS);
+  }
+  closeMov();
+  buildAdmin();
+  showToast('✅ Abonnement mis à jour pour '+CLIENTS[cid].name);
+}
+
 // ══ VILLA MODAL ══
 // Index global de toutes les villas pour accès rapide
 function getAllVillas(){
@@ -1001,14 +1115,97 @@ function openVilla(id){
     parts.push('</div>');
   }
 
+  // Locations
+  var locs = v.locations || [];
+  parts.push('<div style="margin-top:.8rem;">');
+  parts.push('<div style="font-size:.62rem;color:var(--or3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">📅 Mes locations</div>');
+  if(locs.length > 0){
+    locs.forEach(function(loc, li){
+      var du = loc.from ? new Date(loc.from).toLocaleDateString('fr-FR') : '?';
+      var au = loc.to ? new Date(loc.to).toLocaleDateString('fr-FR') : '?';
+      var plat = loc.platform || '';
+      parts.push('<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;background:var(--noir3);border-radius:6px;margin-bottom:.3rem;font-size:.75rem;">');
+      parts.push('<span style="color:var(--or3);font-weight:600;">'+du+'</span>');
+      parts.push('<span style="color:var(--gris);">→</span>');
+      parts.push('<span style="color:var(--or3);font-weight:600;">'+au+'</span>');
+      if(plat) parts.push('<span style="background:var(--gris2);padding:1px 6px;border-radius:10px;font-size:.6rem;color:var(--gris);margin-left:auto;">'+plat+'</span>');
+      parts.push('<span onclick="deleteLocation(\''+id+'\','+li+')" style="color:#f87171;cursor:pointer;font-size:.7rem;margin-left:.3rem;">✕</span>');
+      parts.push('</div>');
+    });
+  } else {
+    parts.push('<div style="font-size:.73rem;color:var(--gris);padding:.5rem 0;">Aucune location enregistrée</div>');
+  }
+  parts.push('<button class="add-btn" style="margin-top:.4rem;font-size:.75rem;padding:.55rem;" onclick="openAddLocation(\''+id+'\')">＋ Ajouter une période de location</button>');
+  parts.push('</div>');
+
   // Boutons
-  parts.push('<div style="display:flex;gap:.6rem;margin-top:.6rem;">');
+  parts.push('<div style="display:flex;gap:.6rem;margin-top:.8rem;">');
   parts.push('<button class="cancel-btn" style="flex:1;background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.3);color:#f87171;" onclick="window._villaToDelete=window._currentVillaId;confirmDeleteVilla()">🗑 Supprimer</button>');
   parts.push('<button class="cancel-btn" style="flex:1;" onclick="closeMov()">Fermer</button>');
   parts.push('</div>');
 
   document.getElementById('modalbody').innerHTML = parts.join('');
   document.getElementById('modal').classList.add('open');
+}
+
+// ══ LOCATIONS ══
+function openAddLocation(villaId){
+  var h='<div class="mh"></div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;color:var(--or3);margin-bottom:.8rem;">📅 Nouvelle location</div>';
+  h+='<div class="form-row">';
+  h+='<div class="form-group"><label class="form-label">Date début *</label><input class="form-input" type="date" id="loc-from" /></div>';
+  h+='<div class="form-group"><label class="form-label">Date fin *</label><input class="form-input" type="date" id="loc-to" /></div>';
+  h+='</div>';
+  h+='<div class="form-group"><label class="form-label">Plateforme (optionnel)</label>';
+  h+='<div style="display:flex;gap:.4rem;flex-wrap:wrap;" id="loc-plats">';
+  h+='<div class="plat-chip" onclick="this.classList.toggle(\'on\')">Airbnb</div>';
+  h+='<div class="plat-chip" onclick="this.classList.toggle(\'on\')">Booking</div>';
+  h+='<div class="plat-chip" onclick="this.classList.toggle(\'on\')">Agoda</div>';
+  h+='<div class="plat-chip" onclick="this.classList.toggle(\'on\')">Direct</div>';
+  h+='</div></div>';
+  h+='<div class="form-group"><label class="form-label">Montant reçu (optionnel)</label>';
+  h+='<div style="display:flex;align-items:center;gap:.4rem;"><input class="form-input" type="number" id="loc-amount" placeholder="0" style="flex:1;" /><span style="color:var(--or3);font-weight:700;">฿</span></div></div>';
+  h+='<div class="form-group"><label class="form-label">Note (optionnel)</label>';
+  h+='<input class="form-input" id="loc-note" placeholder="Ex: famille française, 4 pers." /></div>';
+  h+='<button class="save-btn" onclick="saveLocation(\''+villaId+'\')">✓ Enregistrer la location</button>';
+  h+='<button class="cancel-btn" onclick="openVilla(\''+villaId+'\')">Retour</button>';
+  document.getElementById('modalbody').innerHTML=h;
+}
+
+function saveLocation(villaId){
+  var from = document.getElementById('loc-from').value;
+  var to = document.getElementById('loc-to').value;
+  if(!from || !to){showToast('⚠️ Renseignez les dates de début et fin');return;}
+  var plats = [];
+  document.querySelectorAll('#loc-plats .plat-chip.on').forEach(function(el){ plats.push(el.textContent); });
+  var amount = parseFloat(document.getElementById('loc-amount').value) || 0;
+  var note = (document.getElementById('loc-note').value||'').trim();
+
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(!cid || !CLIENTS[cid]) return;
+  var v = CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v){showToast('❌ Villa introuvable');return;}
+  if(!v.locations) v.locations = [];
+  v.locations.push({ from:from, to:to, platform:plats.join(', '), amount:amount, note:note, ts:Date.now() });
+  // Trier par date
+  v.locations.sort(function(a,b){ return new Date(a.from) - new Date(b.from); });
+  save('clients', CLIENTS);
+  // Mettre à jour CU
+  CU = {...CLIENTS[cid], id:cid};
+  openVilla(villaId);
+  showToast('✅ Location enregistrée');
+}
+
+function deleteLocation(villaId, idx){
+  var cid = CU.id || localStorage.getItem('acs_last_id');
+  if(!cid || !CLIENTS[cid]) return;
+  var v = CLIENTS[cid].villas ? CLIENTS[cid].villas.find(function(x){ return x.id===villaId; }) : null;
+  if(!v || !v.locations) return;
+  v.locations.splice(idx, 1);
+  save('clients', CLIENTS);
+  CU = {...CLIENTS[cid], id:cid};
+  openVilla(villaId);
+  showToast('✅ Location supprimée');
 }
 
 function confirmDeleteVilla(id_unused){
@@ -1060,14 +1257,35 @@ function buildThreads(){
     });
     document.getElementById('threads').innerHTML=h||'<div style="text-align:center;color:var(--gris);padding:2rem;">Aucun client</div>';
   }else{
+    let h2='';
+    // Admin thread
     const convId = getConvId(myId, 'admin');
     const convMsgs = allMsgs.filter(function(m){ return m.conv===convId; });
     const unread = convMsgs.filter(function(m){ return m.to===myId && !m.read; }).length;
     const lastMsg = convMsgs.length>0 ? convMsgs[convMsgs.length-1] : null;
     const preview = lastMsg ? lastMsg.text.substring(0,45)+(lastMsg.text.length>45?'...':'') : 'Envoyez un message à votre gestionnaire';
     const timeStr = lastMsg ? lastMsg.time : '—';
-    document.getElementById('threads').innerHTML=`
-      <div class="th" onclick="openConvWith('ACS — Admin','admin')"><div class="tav" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">AB${unread>0?'<div class="tod"></div>':''}</div><div class="ti"><div class="tn">Alexis — Gestionnaire ACS</div><div class="tp">${preview}</div></div><div class="tm"><div class="tt">${timeStr}</div>${unread>0?'<span class="tbadge">'+unread+'</span>':''}</div></div>`;
+    h2+=`<div class="th" onclick="openConvWith('ACS — Admin','admin')"><div class="tav" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">AB${unread>0?'<div class="tod"></div>':''}</div><div class="ti"><div class="tn">Alexis — Gestionnaire ACS</div><div class="tp">${preview}</div></div><div class="tm"><div class="tt">${timeStr}</div>${unread>0?'<span class="tbadge">'+unread+'</span>':''}</div></div>`;
+
+    // Friends threads
+    var friends = getFriends(myId);
+    if(friends.length > 0){
+      h2+='<div style="padding:.6rem 1rem .3rem;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gris);">Amis</div>';
+      friends.forEach(function(fid){
+        CLIENTS = load('clients', DEFAULT_CLIENTS);
+        var fc = CLIENTS[fid];
+        if(!fc) return;
+        var fConvId = getConvId(myId, fid);
+        var fMsgs = allMsgs.filter(function(m){ return m.conv===fConvId; });
+        var fUnread = fMsgs.filter(function(m){ return m.to===myId && !m.read; }).length;
+        var fLast = fMsgs.length>0 ? fMsgs[fMsgs.length-1] : null;
+        var fPrev = fLast ? fLast.text.substring(0,40)+(fLast.text.length>40?'...':'') : 'Commencer à discuter';
+        var fTime = fLast ? fLast.time : '—';
+        h2+=`<div class="th" onclick="openConvWith('${fc.name}','${fid}')"><div class="tav" style="background:linear-gradient(135deg,#C9950C,#F5D06B)">${fc.initials}${fUnread>0?'<div class="tod"></div>':''}</div><div class="ti"><div class="tn">${fc.name}</div><div class="tp">${fPrev}</div></div><div class="tm"><div class="tt">${fTime}</div>${fUnread>0?'<span class="tbadge">'+fUnread+'</span>':''}</div></div>`;
+      });
+    }
+
+    document.getElementById('threads').innerHTML=h2;
   }
 }
 
@@ -1085,7 +1303,7 @@ function buildProfile(){
     <div class="sh">Mon compte</div>
     <div class="mi" onclick="goPage('dash')" style="cursor:pointer"><div class="mii">🏠</div><div class="mit"><div class="miT">Mes villas</div><div class="miD">Voir toutes mes villas</div></div><div style="color:var(--or3)">›</div></div>
     <div class="mi" onclick="goPage('hist')" style="cursor:pointer"><div class="mii">📄</div><div class="mit"><div class="miT">Mes rapports</div><div class="miD">Télécharger vos rapports PDF</div></div><div style="color:var(--or3)">›</div></div>
-    <div class="mi"><div class="mii">💳</div><div class="mit"><div class="miT">Abonnement</div><div class="miD">${isAdmin?'Gérer les clients':'Formule ACS'}</div></div><div style="color:var(--gris)">›</div></div>
+    <div class="mi" onclick="${isAdmin?'':'openMyAbo()'}" style="cursor:pointer"><div class="mii">💳</div><div class="mit"><div class="miT">Abonnement</div><div class="miD">${isAdmin?'Gérer les clients':getAboLabel()}</div></div><div style="color:${isAdmin?'var(--gris)':'var(--or3)'}">›</div></div>
     <div class="sh" style="margin-top:.8rem">Notifications</div>
     <div class="mi" onclick="testNotif()"><div class="mii">🔔</div><div class="mit"><div class="miT">Rappel quotidien 19h</div><div class="miD">Appuyez pour activer / tester</div></div><div style="color:var(--or3);font-size:.8rem;">Activer</div></div>
     <div class="sh" style="margin-top:.8rem">Support</div>
@@ -1093,6 +1311,71 @@ function buildProfile(){
     <div class="mi" onclick="location.href='mailto:acsconcierge.pro@gmail.com?subject=Demande client ACS&body=Bonjour,'" style="cursor:pointer"><div class="mii">✉️</div><div class="mit"><div class="miT">Email</div><div class="miD">acsconcierge.pro@gmail.com · Appuyez pour écrire</div></div><div style="color:var(--or3)">›</div></div>
     <button class="lob" onclick="doLogout()">Se déconnecter</button>
     <div style="height:1rem"></div>`;
+}
+
+// ══ ABONNEMENT CLIENT ══
+function getAboLabel(){
+  if(!CU || CU.role==='admin') return 'Gérer les clients';
+  var cid = CU.id;
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var c = CLIENTS[cid];
+  if(!c || !c.aboEnd) return 'Formule ACS';
+  var diff = Math.ceil((new Date(c.aboEnd) - new Date()) / 86400000);
+  if(diff > 30) return 'Actif — expire le '+new Date(c.aboEnd).toLocaleDateString('fr-FR');
+  if(diff > 0) return '⚠️ '+diff+' jours restants';
+  return '❌ Expiré';
+}
+function openMyAbo(){
+  if(!CU || CU.role==='admin') return;
+  var cid = CU.id;
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var c = CLIENTS[cid];
+  var aboEnd = c && c.aboEnd ? c.aboEnd : '';
+  var diff = aboEnd ? Math.ceil((new Date(aboEnd) - new Date()) / 86400000) : 0;
+  var active = aboEnd && diff > 0;
+  var statusColor = !aboEnd ? 'var(--gris)' : (active ? '#4ade80' : '#f87171');
+  var statusText = !aboEnd ? 'Non défini' : (active ? 'Actif' : 'Expiré');
+
+  var h='<div class="mh"></div>';
+  h+='<div style="text-align:center;padding:1rem 0;">';
+  h+='<div style="font-size:2.5rem;margin-bottom:.6rem;">💳</div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;color:var(--or3);margin-bottom:.3rem;">Mon abonnement ACS</div>';
+  h+='<div style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .8rem;background:rgba(201,149,12,.08);border:1px solid rgba(201,149,12,.25);border-radius:20px;font-size:.78rem;color:var(--or3);margin-bottom:1rem;">⭐ Formule ACS</div>';
+  h+='</div>';
+
+  h+='<div style="background:var(--noir3);border:1px solid var(--gris2);border-radius:10px;padding:1rem;margin-bottom:.8rem;">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">';
+  h+='<span style="font-size:.75rem;color:var(--gris);">Statut</span>';
+  h+='<span style="font-size:.85rem;font-weight:700;color:'+statusColor+';">'+statusText+'</span>';
+  h+='</div>';
+  if(aboEnd){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">';
+    h+='<span style="font-size:.75rem;color:var(--gris);">Date de fin</span>';
+    h+='<span style="font-size:.85rem;font-weight:600;color:var(--blanc);">'+new Date(aboEnd).toLocaleDateString('fr-FR')+'</span>';
+    h+='</div>';
+    if(active){
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+      h+='<span style="font-size:.75rem;color:var(--gris);">Jours restants</span>';
+      h+='<span style="font-size:1.1rem;font-weight:700;color:'+(diff>30?'#4ade80':(diff>7?'var(--or3)':'#f87171'))+';">'+diff+' jours</span>';
+      h+='</div>';
+      // Barre de progression
+      var pct = Math.min(100, Math.max(0, (diff / 365) * 100));
+      h+='<div style="margin-top:.8rem;height:4px;background:var(--gris2);border-radius:2px;overflow:hidden;">';
+      h+='<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+statusColor+',var(--or3));border-radius:2px;"></div>';
+      h+='</div>';
+    }
+  } else {
+    h+='<div style="font-size:.78rem;color:var(--gris);text-align:center;padding:.5rem 0;">Contactez votre gestionnaire ACS pour activer votre abonnement.</div>';
+  }
+  h+='</div>';
+
+  h+='<div style="background:rgba(201,149,12,.06);border:1px solid rgba(201,149,12,.15);border-radius:8px;padding:.8rem;font-size:.75rem;color:var(--gris);line-height:1.5;margin-bottom:.8rem;">';
+  h+='💡 Votre abonnement inclut : gestion comptable, rapports PDF illimités, notifications quotidiennes, messagerie ACS, et support WhatsApp prioritaire.';
+  h+='</div>';
+
+  h+='<button class="cancel-btn" onclick="closeMov()">Fermer</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
 }
 
 // ══ BUILD CARD (utilisée dans modales résultats) ══
@@ -1843,7 +2126,26 @@ function genRapportAnnuelPDF(year){
 }
 
 // ══ MESSAGERIE INTERNE ══
-function getMessages(){ return load('messages', []); }
+function getMessages(){
+  var msgs = load('messages', []);
+  // Auto-suppression après 24h — archiver dans IDB puis nettoyer
+  var now24 = Date.now();
+  var expired = [];
+  var kept = [];
+  msgs.forEach(function(m){
+    if(m.ts && (now24 - m.ts) > 86400000){ expired.push(m); }
+    else { kept.push(m); }
+  });
+  if(expired.length > 0){
+    // Archiver les messages expirés dans IDB
+    var archives = load('msg_archives', []);
+    archives = archives.concat(expired);
+    save('msg_archives', archives);
+    save('messages', kept);
+    return kept;
+  }
+  return msgs;
+}
 function saveMessages(msgs){ save('messages', msgs); }
 
 function getConvId(a, b){
@@ -1857,18 +2159,22 @@ function openConvWith(name, targetId){
   var otherId = targetId || '';
   var otherName = name;
 
-  // Si admin ouvre une conv avec un client, trouver l'id
-  if(CU.role==='admin' && !otherId){
+  // Si pas de targetId, chercher dans les clients par nom
+  if(!otherId){
+    CLIENTS = load('clients', DEFAULT_CLIENTS);
     Object.entries(CLIENTS).forEach(function(e){
       if(e[1].name === name) otherId = e[0];
     });
   }
-  // Si client ouvre conv, le destinataire est admin
-  if(CU.role!=='admin'){
+  // Si toujours pas trouvé et c'est admin dans le nom
+  if(!otherId && (name.includes('Admin') || name.includes('admin'))){
     otherId = 'admin';
     otherName = 'ACS — Admin';
   }
   if(!otherId){ showToast('❌ Destinataire introuvable'); return; }
+  // Charger le nom correct si c'est un client
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  if(otherId !== 'admin' && CLIENTS[otherId]) otherName = CLIENTS[otherId].name;
 
   var convId = getConvId(myId, otherId);
   var allMsgs = getMessages();
@@ -1883,7 +2189,9 @@ function openConvWith(name, targetId){
 
   var h='<div class="mh"></div>';
   h+='<div style="display:flex;align-items:center;gap:.7rem;padding-bottom:.8rem;border-bottom:1px solid var(--gris2);margin-bottom:.8rem;">';
-  h+='<div class="av" style="width:38px;height:38px;font-size:.8rem;">'+(CU.role==='admin'?(CLIENTS[otherId]?CLIENTS[otherId].initials:'?'):'AB')+'</div>';
+  var avInitials = otherId==='admin' ? 'AB' : (CLIENTS[otherId]?CLIENTS[otherId].initials:'?');
+  var avBg = otherId==='admin' ? 'linear-gradient(135deg,#7c3aed,#a855f7)' : 'linear-gradient(135deg,#C9950C,#F5D06B)';
+  h+='<div class="av" style="width:38px;height:38px;font-size:.8rem;background:'+avBg+';">'+avInitials+'</div>';
   h+='<div><div style="font-weight:600;font-size:.92rem;">'+otherName+'</div>';
   h+='<div style="font-size:.65rem;color:var(--gris);">Messagerie interne ACS</div></div></div>';
 
@@ -1935,6 +2243,7 @@ function sendMessage(convId, fromId, toId, otherName){
     text: text,
     time: timeStr,
     date: now2.toLocaleDateString('fr-FR'),
+    ts: now2.getTime(),
     read: false
   });
   saveMessages(allMsgs);
@@ -1946,6 +2255,87 @@ function sendMessage(convId, fromId, toId, otherName){
 
 function closeCV(){}
 function sendCV(){}
+
+// ══ SYSTÈME D'AMIS ══
+function getFriends(userId){
+  var all = load('friends', {});
+  return all[userId] || [];
+}
+function saveFriends(userId, list){
+  var all = load('friends', {});
+  all[userId] = list;
+  save('friends', all);
+}
+function openAddFriend(){
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  var myId = CU.id || 'admin';
+  var friends = getFriends(myId);
+
+  var h='<div class="mh"></div>';
+  h+='<div style="text-align:center;margin-bottom:1rem;">';
+  h+='<div style="font-size:2rem;margin-bottom:.4rem;">👥</div>';
+  h+='<div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;color:var(--or3);">Ajouter un ami</div>';
+  h+='<div style="font-size:.72rem;color:var(--gris);margin-top:.2rem;">Recherchez un utilisateur ACS par identifiant</div>';
+  h+='</div>';
+
+  h+='<div class="form-group"><label class="form-label">Identifiant de l\'utilisateur</label>';
+  h+='<input class="form-input" id="friend-id" placeholder="Ex: jean.dupont" autocapitalize="off" autocomplete="off" /></div>';
+  h+='<button class="save-btn" onclick="addFriend()">＋ Ajouter</button>';
+
+  // Liste amis actuels
+  if(friends.length > 0){
+    h+='<div style="margin-top:1rem;"><div class="sh">Mes amis</div>';
+    friends.forEach(function(fid){
+      var fc = CLIENTS[fid];
+      if(!fc) return;
+      h+='<div style="display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--gris2);">';
+      h+='<div class="av" style="width:32px;height:32px;font-size:.7rem;">'+fc.initials+'</div>';
+      h+='<div style="flex:1;"><div style="font-size:.85rem;font-weight:600;">'+fc.name+'</div><div style="font-size:.65rem;color:var(--gris);">@'+fid+'</div></div>';
+      h+='<span onclick="removeFriend(\''+fid+'\')" style="color:#f87171;cursor:pointer;font-size:.75rem;padding:.3rem .6rem;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:6px;">Retirer</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+
+  h+='<button class="cancel-btn" style="margin-top:.8rem;" onclick="closeMov();buildThreads();">Fermer</button>';
+  document.getElementById('modalbody').innerHTML=h;
+  document.getElementById('modal').classList.add('open');
+}
+
+function addFriend(){
+  var fid = (document.getElementById('friend-id').value||'').trim().toLowerCase();
+  if(!fid){showToast('⚠️ Entrez un identifiant');return;}
+  var myId = CU.id || 'admin';
+  if(fid === myId){showToast('⚠️ Vous ne pouvez pas vous ajouter vous-même');return;}
+  if(fid === 'admin'){showToast('⚠️ L\'admin est déjà dans vos contacts');return;}
+  CLIENTS = load('clients', DEFAULT_CLIENTS);
+  if(!CLIENTS[fid]){showToast('❌ Utilisateur "'+fid+'" introuvable');return;}
+  var friends = getFriends(myId);
+  if(friends.includes(fid)){showToast('⚠️ '+CLIENTS[fid].name+' est déjà votre ami');return;}
+  friends.push(fid);
+  saveFriends(myId, friends);
+  // Ajouter réciproquement
+  var theirFriends = getFriends(fid);
+  if(!theirFriends.includes(myId)){
+    theirFriends.push(myId);
+    saveFriends(fid, theirFriends);
+  }
+  showToast('✅ '+CLIENTS[fid].name+' ajouté en ami !');
+  openAddFriend(); // Rafraîchir
+}
+
+function removeFriend(fid){
+  var myId = CU.id || 'admin';
+  var friends = getFriends(myId);
+  friends = friends.filter(function(f){return f!==fid;});
+  saveFriends(myId, friends);
+  // Retirer réciproquement
+  var theirFriends = getFriends(fid);
+  theirFriends = theirFriends.filter(function(f){return f!==myId;});
+  saveFriends(fid, theirFriends);
+  showToast('✅ Ami retiré');
+  openAddFriend(); // Rafraîchir
+}
 
 // ══ HISTORIQUE ══
 function buildRapportFromHistory(x){
